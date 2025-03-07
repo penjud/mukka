@@ -1,0 +1,48 @@
+version: '3.8'
+
+services:
+  # Memory Service
+  mcp-memory:
+    image: node:18-alpine
+    volumes:
+      - mcp-memory-data:/data
+    command: sh -c "npm install -g @modelcontextprotocol/server-memory && MEMORY_FILE_PATH=/data/memory.json npx @modelcontextprotocol/server-memory"
+    restart: unless-stopped
+
+  # Filesystem Service
+  mcp-filesystem:
+    image: node:18-alpine
+    volumes:
+      - ./projects:/projects:rw
+    command: sh -c "npm install -g @modelcontextprotocol/server-filesystem && npx @modelcontextprotocol/server-filesystem /projects"
+    restart: unless-stopped
+
+  # Brave Search Service
+  mcp-brave-search:
+    image: node:18-alpine
+    environment:
+      - BRAVE_API_KEY=${BRAVE_API_KEY:-}
+    command: sh -c "npm install -g @modelcontextprotocol/server-brave-search && npx @modelcontextprotocol/server-brave-search"
+    restart: unless-stopped
+    
+  # We'll use NodeJS http-server instead of building Go app
+  mcp-web-ui:
+    image: node:18-alpine
+    ports:
+      - "8080:8080"
+    environment:
+      - PORT=8080
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY:-}
+      - OPENAI_API_KEY=${OPENAI_API_KEY:-}
+      - OPENROUTER_API_KEY=${OPENROUTER_API_KEY:-}
+    volumes:
+      - ./config/mcpwebui:/app/config
+    working_dir: /app
+    command: sh -c "echo 'MCP services running. Access the memory, filesystem, and brave-search services via their respective MCP clients.' > index.html && npm install -g http-server && http-server -p 8080"
+    depends_on:
+      - mcp-memory
+      - mcp-filesystem
+      - mcp-brave-search
+
+volumes:
+  mcp-memory-data:

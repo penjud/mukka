@@ -1,0 +1,16 @@
+# Node modules
+node_modules/
+
+# Environment variables
+.env
+
+# Logs
+*.log
+
+# Temporary files
+*.tmp
+.DS_Store
+
+# Data directories
+data/*/*
+!data/*/.gitkeep

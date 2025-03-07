@@ -1,0 +1,245 @@
+{
+  "main": {
+    "id": "adf17fe1951fbf2a",
+    "type": "split",
+    "children": [
+      {
+        "id": "21cf34155da355c5",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "dcf1ca95dc044414",
+            "type": "leaf",
+            "state": {
+              "type": "markdown",
+              "state": {
+                "file": "05-Reference/Snippets/01-Handover-Process.md",
+                "mode": "source",
+                "source": false
+              },
+              "icon": "lucide-file",
+              "title": "01-Handover-Process"
+            }
+          }
+        ]
+      },
+      {
+        "id": "72976ba4ec8f309c",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "74f91af6215c3280",
+            "type": "leaf",
+            "state": {
+              "type": "markdown",
+              "state": {
+                "file": "01-System/Handovers/2025-03-07_13-40_Handover.md",
+                "mode": "source",
+                "source": false
+              },
+              "icon": "lucide-file",
+              "title": "2025-03-07_13-40_Handover"
+            }
+          }
+        ]
+      }
+    ],
+    "direction": "vertical"
+  },
+  "left": {
+    "id": "e46515e80c470950",
+    "type": "split",
+    "children": [
+      {
+        "id": "100dd280dab52210",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "44f16da7cc74b9e5",
+            "type": "leaf",
+            "state": {
+              "type": "file-explorer",
+              "state": {
+                "sortOrder": "alphabetical",
+                "autoReveal": false
+              },
+              "icon": "lucide-folder-closed",
+              "title": "Files"
+            }
+          },
+          {
+            "id": "4e4e59d4e7e6ce40",
+            "type": "leaf",
+            "state": {
+              "type": "search",
+              "state": {
+                "query": "",
+                "matchingCase": false,
+                "explainSearch": false,
+                "collapseAll": false,
+                "extraContext": false,
+                "sortOrder": "alphabetical"
+              },
+              "icon": "lucide-search",
+              "title": "Search"
+            }
+          },
+          {
+            "id": "78543772f7b75333",
+            "type": "leaf",
+            "state": {
+              "type": "bookmarks",
+              "state": {},
+              "icon": "lucide-bookmark",
+              "title": "Bookmarks"
+            }
+          }
+        ]
+      }
+    ],
+    "direction": "horizontal",
+    "width": 300
+  },
+  "right": {
+    "id": "114edfc35b1d9d52",
+    "type": "split",
+    "children": [
+      {
+        "id": "d7fe470eb9b87dc6",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "e0e25bbc326ddf84",
+            "type": "leaf",
+            "state": {
+              "type": "backlink",
+              "state": {
+                "file": "01-System/Handovers/2025-03-07_13-40_Handover.md",
+                "collapseAll": false,
+                "extraContext": false,
+                "sortOrder": "alphabetical",
+                "showSearch": false,
+                "searchQuery": "",
+                "backlinkCollapsed": false,
+                "unlinkedCollapsed": true
+              },
+              "icon": "links-coming-in",
+              "title": "Backlinks for 2025-03-07_13-40_Handover"
+            }
+          },
+          {
+            "id": "823bc9f0f2218063",
+            "type": "leaf",
+            "state": {
+              "type": "outgoing-link",
+              "state": {
+                "file": "Welcome.md",
+                "linksCollapsed": false,
+                "unlinkedCollapsed": true
+              },
+              "icon": "links-going-out",
+              "title": "Outgoing links from Welcome"
+            }
+          },
+          {
+            "id": "082457a03d99c5e0",
+            "type": "leaf",
+            "state": {
+              "type": "tag",
+              "state": {
+                "sortOrder": "frequency",
+                "useHierarchy": true,
+                "showSearch": false,
+                "searchQuery": ""
+              },
+              "icon": "lucide-tags",
+              "title": "Tags"
+            }
+          },
+          {
+            "id": "bc2f606112276cb9",
+            "type": "leaf",
+            "state": {
+              "type": "outline",
+              "state": {
+                "file": "Welcome.md",
+                "followCursor": false,
+                "showSearch": false,
+                "searchQuery": ""
+              },
+              "icon": "lucide-list",
+              "title": "Outline of Welcome"
+            }
+          },
+          {
+            "id": "08f016a500ef9e2c",
+            "type": "leaf",
+            "state": {
+              "type": "smart-connections-view",
+              "state": {},
+              "icon": "smart-connections",
+              "title": "Smart Connections"
+            }
+          },
+          {
+            "id": "99bec1cd4627df25",
+            "type": "leaf",
+            "state": {
+              "type": "smart-chat-view",
+              "state": {},
+              "icon": "message-square",
+              "title": "Smart Chat"
+            }
+          }
+        ],
+        "currentTab": 5
+      }
+    ],
+    "direction": "horizontal",
+    "width": 300
+  },
+  "left-ribbon": {
+    "hiddenItems": {
+      "switcher:Open quick switcher": false,
+      "graph:Open graph view": false,
+      "canvas:Create new canvas": false,
+      "daily-notes:Open today's daily note": false,
+      "templates:Insert template": false,
+      "command-palette:Open command palette": false,
+      "templater-obsidian:Templater": false,
+      "obsidian-excalidraw-plugin:New drawing": false,
+      "omnisearch:Omnisearch": false,
+      "smart-connections:Open: View Smart Connections": false,
+      "smart-connections:Open: Smart Chat Conversation": false,
+      "smart-connections-visualizer:Open smart connections visualizer": false,
+      "bbawj-semantic-search:Semantic Search": false
+    }
+  },
+  "active": "74f91af6215c3280",
+  "lastOpenFiles": [
+    "01-System/Handovers/2025-03-07_13-15_Handover.md",
+    "01-System/Handovers/2025-03-07_13-40_Handover.md",
+    "01-System/01-System-Overview.md",
+    "05-Reference/Snippets/01-Handover-Process.md",
+    "_templates/snippet.md",
+    "04-AI_Conversations/2025-03-07/12-29_PlanningMCP.md",
+    "_templates/ai-conversation.md",
+    "Welcome.md",
+    "05-Reference/Snippets",
+    "01-System/Handovers/current-handover.md",
+    "_templates/handover.md",
+    "01-System/Handovers",
+    "04-AI_Conversations/2025-03-07",
+    "02-Projects/01-MCP-Setup-Project.md",
+    "_templates/edit-history.md",
+    "_templates/project.md",
+    "_templates/general-note.md",
+    "05-Reference",
+    "04-AI_Conversations",
+    "03-Research",
+    "02-Projects",
+    "01-System",
+    "_resources",
+    "_templates"
+  ]
+}
