@@ -1,0 +1,390 @@
+<template>
+  <div class="ollama-interface">
+    <h2>Ollama Integration</h2>
+    
+    <div class="model-selector">
+      <label>Select Model:</label>
+      <select v-model="selectedModel">
+        <option v-for="model in availableModels" :key="model.id" :value="model.id">
+          {{ model.name }}
+        </option>
+      </select>
+      
+      <button @click="refreshModels" class="refresh-button">
+        <i class="mdi mdi-refresh"></i> Refresh
+      </button>
+    </div>
+    
+    <div class="chat-container">
+      <div class="chat-messages" ref="chatContainer">
+        <div v-if="messages.length === 0" class="empty-chat">
+          <i class="mdi mdi-comment-text-outline"></i>
+          <p>No messages yet. Start a conversation!</p>
+        </div>
+        
+        <div 
+          v-for="(message, index) in messages" 
+          :key="index"
+          class="message"
+          :class="{ 'user-message': message.role === 'user', 'assistant-message': message.role === 'assistant' }"
+        >
+          <div class="message-avatar">
+            <i :class="message.role === 'user' ? 'mdi mdi-account' : 'mdi mdi-robot'"></i>
+          </div>
+          <div class="message-content">
+            <div class="message-role">{{ message.role === 'user' ? 'You' : 'AI Assistant' }}</div>
+            <div class="message-text">{{ message.content }}</div>
+          </div>
+        </div>
+        
+        <div v-if="isGenerating" class="generating-indicator">
+          <div class="typing-indicator">
+            <span></span>
+            <span></span>
+            <span></span>
+          </div>
+        </div>
+      </div>
+      
+      <div class="chat-input">
+        <textarea 
+          v-model="userInput" 
+          placeholder="Type your message here..."
+          @keydown.enter.prevent="sendMessage"
+          :disabled="isGenerating"
+          ref="inputField"
+        ></textarea>
+        <button 
+          @click="sendMessage" 
+          class="send-button"
+          :disabled="isGenerating || !userInput.trim()"
+        >
+          <i class="mdi mdi-send"></i>
+        </button>
+      </div>
+    </div>
+    
+    <div class="model-info">
+      <h3>Model Information</h3>
+      <div class="info-card">
+        <p class="placeholder-text">This component will be fully implemented in the next update.</p>
+        <p>Currently using placeholder data for demonstration purposes.</p>
+      </div>
+    </div>
+  </div>
+</template>
+
+<script>
+import { ref, onMounted, watch, nextTick } from 'vue';
+
+export default {
+  name: 'OllamaInterface',
+  
+  setup() {
+    const selectedModel = ref('');
+    const availableModels = ref([
+      { id: 'llama3', name: 'LLaMA 3 (8B)' },
+      { id: 'mistral', name: 'Mistral 7B' },
+      { id: 'codellama', name: 'CodeLlama 7B' }
+    ]);
+    const userInput = ref('');
+    const messages = ref([]);
+    const isGenerating = ref(false);
+    const chatContainer = ref(null);
+    const inputField = ref(null);
+    
+    // Set default model
+    onMounted(() => {
+      if (availableModels.value.length > 0) {
+        selectedModel.value = availableModels.value[0].id;
+      }
+      
+      // Focus input field
+      if (inputField.value) {
+        inputField.value.focus();
+      }
+    });
+    
+    // Scroll chat to bottom whenever messages change
+    watch(messages, () => {
+      nextTick(() => {
+        scrollToBottom();
+      });
+    });
+    
+    const scrollToBottom = () => {
+      if (chatContainer.value) {
+        chatContainer.value.scrollTop = chatContainer.value.scrollHeight;
+      }
+    };
+    
+    const refreshModels = () => {
+      // This will be implemented to fetch models from Ollama API
+      console.log('Refreshing models...');
+    };
+    
+    const sendMessage = () => {
+      if (!userInput.value.trim() || isGenerating.value) return;
+      
+      // Add user message
+      messages.value.push({
+        role: 'user',
+        content: userInput.value
+      });
+      
+      // Clear input
+      const userMessage = userInput.value;
+      userInput.value = '';
+      
+      // Set generating state
+      isGenerating.value = true;
+      
+      // Simulate AI response (this will be replaced with actual API call)
+      setTimeout(() => {
+        messages.value.push({
+          role: 'assistant',
+          content: generatePlaceholderResponse(userMessage)
+        });
+        
+        isGenerating.value = false;
+      }, 1500);
+    };
+    
+    // Generate a placeholder response (to be replaced with actual API call)
+    const generatePlaceholderResponse = (userMessage) => {
+      const responses = [
+        "I'm a placeholder response. In the actual implementation, I'll be connected to the Ollama API.",
+        "This is a simulated response. The real Ollama integration will be implemented in the next update.",
+        "When fully implemented, I'll be able to generate responses using the selected model from Ollama.",
+        "Thanks for your message! In the complete implementation, this will be generated by " + selectedModel.value + "."
+      ];
+      
+      return responses[Math.floor(Math.random() * responses.length)];
+    };
+    
+    return {
+      selectedModel,
+      availableModels,
+      userInput,
+      messages,
+      isGenerating,
+      chatContainer,
+      inputField,
+      refreshModels,
+      sendMessage
+    };
+  }
+};
+</script>
+
+<style scoped>
+.ollama-interface {
+  display: flex;
+  flex-direction: column;
+  height: calc(100vh - var(--header-height) - var(--footer-height) - 4rem);
+  max-height: 800px;
+}
+
+.model-selector {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.model-selector select {
+  padding: 0.5rem;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  min-width: 200px;
+}
+
+.refresh-button {
+  padding: 0.5rem 1rem;
+  background-color: #f5f5f5;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.refresh-button:hover {
+  background-color: #e5e5e5;
+}
+
+.chat-container {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  background-color: white;
+  margin-bottom: 1rem;
+}
+
+.chat-messages {
+  flex: 1;
+  overflow-y: auto;
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.empty-chat {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  height: 200px;
+  color: #999;
+  text-align: center;
+}
+
+.empty-chat i {
+  font-size: 3rem;
+  margin-bottom: 1rem;
+}
+
+.message {
+  display: flex;
+  gap: 1rem;
+  max-width: 80%;
+}
+
+.user-message {
+  align-self: flex-end;
+  flex-direction: row-reverse;
+}
+
+.assistant-message {
+  align-self: flex-start;
+}
+
+.message-avatar {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 50%;
+  background-color: #f5f5f5;
+  color: #666;
+  font-size: 1.2rem;
+}
+
+.user-message .message-avatar {
+  background-color: var(--primary-color);
+  color: white;
+}
+
+.assistant-message .message-avatar {
+  background-color: var(--secondary-color);
+  color: white;
+}
+
+.message-content {
+  background-color: #f5f5f5;
+  border-radius: 8px;
+  padding: 0.75rem 1rem;
+  position: relative;
+}
+
+.user-message .message-content {
+  background-color: #e3f2fd;
+}
+
+.message-role {
+  font-weight: bold;
+  font-size: 0.8rem;
+  margin-bottom: 0.25rem;
+  color: #666;
+}
+
+.message-text {
+  line-height: 1.4;
+}
+
+.generating-indicator {
+  align-self: flex-start;
+  margin-left: 3.5rem;
+}
+
+.typing-indicator {
+  display: flex;
+  gap: 0.3rem;
+}
+
+.typing-indicator span {
+  width: 8px;
+  height: 8px;
+  background-color: #999;
+  border-radius: 50%;
+  display: inline-block;
+  animation: typing 1.5s infinite ease-in-out;
+}
+
+.typing-indicator span:nth-child(2) {
+  animation-delay: 0.2s;
+}
+
+.typing-indicator span:nth-child(3) {
+  animation-delay: 0.4s;
+}
+
+@keyframes typing {
+  0% { transform: translateY(0); }
+  50% { transform: translateY(-10px); }
+  100% { transform: translateY(0); }
+}
+
+.chat-input {
+  display: flex;
+  padding: 1rem;
+  border-top: 1px solid #eee;
+}
+
+.chat-input textarea {
+  flex: 1;
+  padding: 0.75rem;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  resize: none;
+  height: 60px;
+  line-height: 1.4;
+}
+
+.send-button {
+  margin-left: 0.5rem;
+  padding: 0 1rem;
+  background-color: var(--primary-color);
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 1.2rem;
+}
+
+.send-button:disabled {
+  background-color: #ddd;
+  cursor: not-allowed;
+}
+
+.model-info {
+  margin-top: 1rem;
+}
+
+.info-card {
+  background-color: white;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  padding: 1rem;
+}
+
+.placeholder-text {
+  color: #999;
+  font-style: italic;
+}
+</style>

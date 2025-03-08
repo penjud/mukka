@@ -9,10 +9,10 @@ services:
     container_name: mukka-mcp-base-server
     restart: unless-stopped
     ports:
-      - "8090:8090"
+      - "${BASE_MCP_PORT}:${BASE_MCP_PORT}"
     environment:
-      - PORT=8090
-      - LOG_LEVEL=info
+      - PORT=${BASE_MCP_PORT}
+      - LOG_LEVEL=${BASE_MCP_LOG_LEVEL}
     volumes:
       - ./backend/config:/app/config
       - ./backend/data:/app/data
@@ -27,14 +27,17 @@ services:
     container_name: mukka-mcp-memory-server
     restart: unless-stopped
     ports:
-      - "8094:8094"
+      - "${MEMORY_MCP_PORT}:${MEMORY_MCP_PORT}"
     environment:
-      - PORT=8094
-      - MEMORY_FILE_PATH=/app/data/memory/memory.json
+      - PORT=${MEMORY_MCP_PORT}
+      - BASE_SERVER_URL=http://mcp-base-server:${BASE_MCP_PORT}
+      - MEMORY_FILE_PATH=${MEMORY_FILE_PATH}
     volumes:
       - ./backend/data/memory:/app/data/memory
     networks:
       - mukka-network
+    depends_on:
+      - mcp-base-server
 
   # Filesystem MCP Server
   mcp-filesystem-server:
@@ -44,14 +47,17 @@ services:
     container_name: mukka-mcp-filesystem-server
     restart: unless-stopped
     ports:
-      - "8095:8095"
+      - "${FILESYSTEM_MCP_PORT}:${FILESYSTEM_MCP_PORT}"
     environment:
-      - PORT=8095
+      - PORT=${FILESYSTEM_MCP_PORT}
+      - BASE_SERVER_URL=http://mcp-base-server:${BASE_MCP_PORT}
     volumes:
       - /home/mothership:/home/mothership:ro
       - ./rag:/app/rag
     networks:
       - mukka-network
+    depends_on:
+      - mcp-base-server
 
   # Brave Search MCP Server
   mcp-brave-search-server:
@@ -61,49 +67,105 @@ services:
     container_name: mukka-mcp-brave-search-server
     restart: unless-stopped
     ports:
-      - "8096:8096"
+      - "${BRAVE_SEARCH_MCP_PORT}:${BRAVE_SEARCH_MCP_PORT}"
     environment:
-      - PORT=8096
+      - PORT=${BRAVE_SEARCH_MCP_PORT}
+      - BASE_SERVER_URL=http://mcp-base-server:${BASE_MCP_PORT}
       - BRAVE_SEARCH_API_KEY=${BRAVE_SEARCH_API_KEY}
     networks:
       - mukka-network
-
-  # Ollama Server
-  ollama:
-    image: ollama/ollama:latest
-    container_name: mukka-ollama
-    restart: unless-stopped
-    ports:
-      - "11434:11434"
-    volumes:
-      - ./backend/data/ollama:/root/.ollama
-    deploy:
-      resources:
-        reservations:
-          devices:
-            - driver: nvidia
-              count: 1
-              capabilities: [gpu]
-    networks:
-      - mukka-network
-
-  # MCP Ollama Server (Bridge)
-  mcp-ollama-server:
-    build:
-      context: ./backend/services/ollama
-      dockerfile: Dockerfile
-    container_name: mukka-mcp-ollama-server
-    restart: unless-stopped
-    ports:
-      - "8082:8082"
-    environment:
-      - PORT=8082
-      - OLLAMA_HOST=http://ollama:11434
     depends_on:
-      - ollama
+      - mcp-base-server
+
+  # Auth MCP Server
+  mcp-auth-server:
+    build:
+      context: ./backend/services/auth
+      dockerfile: Dockerfile
+    container_name: mukka-mcp-auth-server
+    restart: unless-stopped
+    ports:
+      - "${AUTH_MCP_PORT}:${AUTH_MCP_PORT}"
+    environment:
+      - PORT=${AUTH_MCP_PORT}
+      - BASE_SERVER_URL=http://mcp-base-server:${BASE_MCP_PORT}
+      - JWT_SECRET=${JWT_SECRET}
+      - CORS_ORIGIN=${CORS_ORIGIN}
+      - USERS_FILE_PATH=${USERS_FILE_PATH}
+    volumes:
+      - ./backend/data/auth:/app/data
     networks:
       - mukka-network
+    depends_on:
+      - mcp-base-server
 
-  # MCP Web UI
-  mcp-web-ui:
-    image: penjud/mcp-web-
+  # Ollama Server is running on the host system
+  # Service is commented out to avoid conflicts
+  # ollama:
+  #   image: ollama/ollama:latest
+  #   container_name: mukka-ollama
+  #   restart: unless-stopped
+  #   ports:
+  #     - "11435:${OLLAMA_PORT}"
+  #   volumes:
+  #     - ./backend/data/ollama:/root/.ollama
+  #   deploy:
+  #     resources:
+  #       reservations:
+  #         devices:
+  #           - driver: nvidia
+  #             count: 1
+  #             capabilities: [gpu]
+  #   networks:
+  #     - mukka-network
+
+  # MCP Ollama Bridge Server
+  mcp-ollama-bridge:
+    build:
+      context: ./backend/services/ollama-bridge
+      dockerfile: Dockerfile
+    container_name: mukka-mcp-ollama-bridge
+    restart: unless-stopped
+    ports:
+      - "${OLLAMA_BRIDGE_PORT}:${OLLAMA_BRIDGE_PORT}"
+    environment:
+      - PORT=${OLLAMA_BRIDGE_PORT}
+      - BASE_SERVER_URL=http://mcp-base-server:${BASE_MCP_PORT}
+      - OLLAMA_HOST=http://host.docker.internal:11434
+      - MCP_AUTH_TOKEN=${MCP_AUTH_TOKEN}
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    depends_on:
+      - mcp-base-server
+    networks:
+      - mukka-network
+      
+  # Vue Dashboard - Primary User Interface
+  vue-dashboard:
+    build:
+      context: ./frontend/vue-dashboard
+      dockerfile: Dockerfile
+    container_name: mukka-vue-dashboard
+    restart: unless-stopped
+    ports:
+      - "3002:80"
+    environment:
+      - MCP_BASE_URL=http://mcp-base-server:${BASE_MCP_PORT}
+      - MCP_MEMORY_URL=http://mcp-memory-server:${MEMORY_MCP_PORT}
+      - MCP_FILESYSTEM_URL=http://mcp-filesystem-server:${FILESYSTEM_MCP_PORT}
+      - MCP_BRAVE_SEARCH_URL=http://mcp-brave-search-server:${BRAVE_SEARCH_MCP_PORT}
+      - MCP_OLLAMA_URL=http://mcp-ollama-bridge:${OLLAMA_BRIDGE_PORT}
+      - MCP_AUTH_URL=http://mcp-auth-server:${AUTH_MCP_PORT}
+    networks:
+      - mukka-network
+    depends_on:
+      - mcp-base-server
+      - mcp-memory-server
+      - mcp-filesystem-server
+      - mcp-brave-search-server
+      - mcp-ollama-bridge
+      - mcp-auth-server
+
+networks:
+  mukka-network:
+    driver: bridge
