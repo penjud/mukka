@@ -1,0 +1,10 @@
+[Desktop Entry]
+Type=Application
+Exec=/home/mothership/mukka/start-vue-dashboard.sh
+Hidden=false
+NoDisplay=false
+X-GNOME-Autostart-enabled=true
+Name[en_US]=Mukka Vue Dashboard
+Name=Mukka Vue Dashboard
+Comment[en_US]=Starts the Mukka Vue Dashboard container after Docker Desktop is running
+Comment=Starts the Mukka Vue Dashboard container after Docker Desktop is running
