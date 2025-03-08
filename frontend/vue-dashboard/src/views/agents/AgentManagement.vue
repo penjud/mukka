@@ -273,7 +273,7 @@ import { useRouter } from 'vue-router';
 import mcpApi from '../../services/mcp-api';
 import { serviceStore } from '../../services/discovery';
 // Import the uuid library for client-side ID generation
-import { v4 as uuidv4 } from 'uuid';
+import uuidHelper from '../../services/uuid-helper';
 
 // Router
 const router = useRouter();
@@ -461,9 +461,48 @@ async function debugSaveAgent() {
     
     // Handle avatar upload if provided
     if (avatarFile.value) {
-      debugInfo.value.push('Avatar file provided, would upload in production');
-      // In a real implementation, this would upload the file to a server
-      agentFormData.avatar = '/avatars/placeholder.jpg';
+      debugInfo.value.push('Avatar file provided, uploading it now');
+      try {
+        debugInfo.value.push('Using filesystem service for avatar upload');
+        
+        // Create a FormData object for the file upload
+        const formData = new FormData();
+        formData.append('avatar', avatarFile.value);
+        
+        // Get filesystem service endpoint
+        const filesystemService = serviceStore.services['filesystem'];
+        if (!filesystemService || !filesystemService.status) {
+          throw new Error('Filesystem service not available');
+        }
+        
+        // Upload the file to the filesystem MCP service
+        const uploadUrl = filesystemService.endpoint + '/uploads/avatar';
+        debugInfo.value.push(`Uploading avatar to ${uploadUrl}`);
+        
+        const uploadResponse = await fetch(uploadUrl, {
+          method: 'POST',
+          body: formData
+        });
+        
+        if (!uploadResponse.ok) {
+          throw new Error(`Upload failed: ${uploadResponse.statusText}`);
+        }
+        
+        const uploadResult = await uploadResponse.json();
+        debugInfo.value.push(`Avatar upload successful: ${JSON.stringify(uploadResult)}`);
+        
+        // Set the avatar path to the uploaded file URL
+        // The URL should be relative to the filesystem service
+        const avatarUrl = filesystemService.endpoint + uploadResult.filePath;
+        debugInfo.value.push(`Setting avatar URL to: ${avatarUrl}`);
+        agentFormData.avatar = avatarUrl;
+      } catch (uploadError) {
+        debugInfo.value.push(`Avatar upload error: ${uploadError.message}`);
+        console.error('Failed to upload avatar:', uploadError);
+        // Generate a unique placeholder to avoid caching issues
+        agentFormData.avatar = '/avatars/agent-' + Date.now() + '.jpg';
+        debugInfo.value.push(`Falling back to placeholder: ${agentFormData.avatar}`);
+      }
     }
     
     // Create or update agent
@@ -482,19 +521,19 @@ async function debugSaveAgent() {
     } else {
       debugInfo.value.push('Creating new agent...');
       
-      // Client-side UUID generation
-      const agentId = uuidv4();
-      debugInfo.value.push(`Generated client-side UUID: ${agentId}`);
-      
-      // Create a new agent payload with the generated ID
+      // Use UUID helper for standardized client-side UUID generation
       const agentPayload = {
         ...agentFormData,
-        id: agentId, // Use the client-generated UUID
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString()
       };
       
-      debugInfo.value.push(`Enhanced agent payload: ${JSON.stringify(agentPayload)}`);
+      // Ensure the agent has a valid UUID
+      const agentWithId = uuidHelper.ensureEntityId(agentPayload);
+      debugInfo.value.push(`Generated client-side UUID: ${agentWithId.id}`);
+      
+      
+      debugInfo.value.push(`Enhanced agent payload: ${JSON.stringify(agentWithId)}`);
       
       const url = '/api/agents';
       debugInfo.value.push(`POST request to ${service.endpoint}${url}`);
@@ -504,15 +543,15 @@ async function debugSaveAgent() {
         const directResponse = await fetch(`${service.endpoint}${url}`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(agentPayload)
+          body: JSON.stringify(agentWithId)
         });
         
         const directResponseData = await directResponse.json();
         debugInfo.value.push(`Direct fetch response: ${JSON.stringify(directResponseData)}`);
         
-        // Use our client-side generated agent data with ID regardless of server response
-        response = agentPayload;
-        debugInfo.value.push(`Using client-generated agent data: ${JSON.stringify(response)}`);
+        // Reconcile client and server IDs to ensure consistency
+        response = uuidHelper.reconcileEntityIds(agentWithId, directResponseData);
+        debugInfo.value.push(`Using reconciled agent data: ${JSON.stringify(response)}`);
         
         // Add to local agent list
         agents.value.push(response);
@@ -542,8 +581,8 @@ async function createConversationWithAgent(agent) {
   try {
     debugInfo.value.push(`Creating conversation with agent ${agent.id}...`);
     
-    // Generate a client-side ID for the conversation for consistency
-    const conversationId = uuidv4();
+    // Generate a client-side ID for the conversation using our helper
+    const conversationId = uuidHelper.generateUuid();
     debugInfo.value.push(`Generated client-side UUID for conversation: ${conversationId}`);
     
     // Create the conversation payload
