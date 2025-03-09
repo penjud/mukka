@@ -24,6 +24,12 @@ import PrivacyPolicy from '../views/legal/PrivacyPolicy.vue'
 import TermsOfService from '../views/legal/TermsOfService.vue'
 import Contact from '../views/legal/Contact.vue'
 
+// Global navigation state to prevent multiple redirects
+const navigationState = {
+  isAuthenticating: false,
+  pendingRoute: null
+}
+
 const routes = [
   {
     path: '/auth',
@@ -38,9 +44,17 @@ const routes = [
             const authStore = useAuthStore();
             const router = vueUseRouter();
             
-            onMounted(() => {
-              authStore.logout();
-              router.push('/auth/login');
+            onMounted(async () => {
+              try {
+                console.log('Logout component mounted, attempting logout');
+                await authStore.logout();
+                console.log('Logout successful, redirecting to login');
+                router.replace('/auth/login');
+              } catch (error) {
+                console.error('Error during logout:', error);
+                // Force navigation to login even if logout fails
+                router.replace('/auth/login');
+              }
             });
             
             return () => null; // No rendering needed
@@ -131,25 +145,135 @@ const router = createRouter({
 })
 
 // Navigation guard for authentication
-router.beforeEach((to, from, next) => {
+router.beforeEach(async (to, from, next) => {
   const authStore = useAuthStore()
   const requiresAuth = to.matched.some(record => record.meta.requiresAuth)
   const requiresAdmin = to.matched.some(record => record.meta.requiresAdmin)
-
-  // Check if user is authenticated
-  if (requiresAuth && !authStore.isAuthenticated) {
-    next('/auth/login')
-  } 
-  // Check if user is admin for admin-only routes
-  else if (requiresAdmin && !authStore.isAdmin) {
-    next('/')
+  
+  // Check if authentication is in progress
+  if (navigationState.isAuthenticating) {
+    // If we're already authenticating and have a pending route, update it
+    if (requiresAuth) {
+      navigationState.pendingRoute = to.fullPath
+    }
+    console.log('Authentication in progress, deferring navigation to:', to.path)
+    next(false) // Abort current navigation while authenticating
+    return
   }
+  
+  // Check if this is first navigation after page load
+  const isInitialNavigation = from.name === undefined
+  
+  // Handle token verification for authentication-required routes
+  if (requiresAuth) {
+    // If no token exists or user is not authenticated, redirect to login
+    if (!authStore.token) {
+      console.log(`Access to ${to.path} requires authentication, redirecting to login`)
+      next({ path: '/auth/login', query: { redirect: to.fullPath } })
+      return
+    }
+    
+    // If token exists but no user (e.g. on page refresh), verify the token
+    if (authStore.token && !authStore.user) {
+      console.log('Token exists but no user object, verifying session')
+      navigationState.isAuthenticating = true
+      navigationState.pendingRoute = to.fullPath
+      
+      try {
+        // Attempt to verify the token before proceeding
+        console.log('Verifying token...')
+        const userProfile = await authStore.fetchUserProfile()
+        
+        navigationState.isAuthenticating = false
+        
+        if (!userProfile) {
+          console.warn('Token validation failed, redirecting to login')
+          next({ path: '/auth/login', query: { redirect: navigationState.pendingRoute } })
+          return
+        }
+        
+        // If token is valid but the route requires admin privileges
+        if (requiresAdmin && !authStore.isAdmin) {
+          console.log(`Access to ${navigationState.pendingRoute} requires admin privileges, redirecting to home`)
+          next('/')
+          return
+        }
+        
+        // Valid token and proper permissions, proceed to original route
+        console.log(`Authentication successful, proceeding to ${navigationState.pendingRoute}`)
+        next({ path: navigationState.pendingRoute, replace: true })
+        return
+      } catch (error) {
+        console.error('Error during token verification:', error)
+        navigationState.isAuthenticating = false
+        next({ path: '/auth/login', query: { redirect: navigationState.pendingRoute } })
+        return
+      }
+    }
+    
+    // Token and user exist, check for admin privileges if required
+    if (requiresAdmin && !authStore.isAdmin) {
+      console.log(`Access to ${to.path} requires admin privileges, redirecting to home`)
+      next('/')
+      return
+    }
+  }
+  
   // Redirect to dashboard if user is already logged in but tries to access auth pages
-  else if (authStore.isAuthenticated && to.path.startsWith('/auth')) {
+  if (authStore.isAuthenticated && to.path.startsWith('/auth') && to.name !== 'Logout') {
+    console.log('User already authenticated, redirecting to dashboard')
     next('/')
+    return
   }
-  else {
-    next()
+  
+  // If no special conditions apply, proceed with navigation
+  next()
+})
+
+// After each navigation, check if token needs refresh
+router.afterEach((to) => {
+  // Skip for auth routes
+  if (to.path.startsWith('/auth')) {
+    return
+  }
+  
+  const authStore = useAuthStore()
+  if (authStore.isAuthenticated && authStore.tokenExpiresAt) {
+    // Check if token is close to expiry (less than 15 minutes remaining, increased from 5)
+    const now = Date.now()
+    const expiresAt = parseInt(authStore.tokenExpiresAt)
+    const remainingSeconds = (expiresAt - now) / 1000
+    
+    if (!isNaN(expiresAt) && remainingSeconds > 0 && remainingSeconds < 900) {
+      console.log(`Token expiring soon (${Math.round(remainingSeconds)}s), refreshing...`)
+      authStore.refreshToken().catch(error => {
+        console.error('Background token refresh failed:', error)
+      })
+    }
+  }
+})
+
+// Add a global error handler for API errors that might indicate authentication issues
+router.onError((error) => {
+  console.error('Router error:', error)
+  
+  // Check if this is an authentication error
+  if (error.message && (
+    error.message.includes('401') || 
+    error.message.includes('403') || 
+    error.message.includes('Authentication required') ||
+    error.message.includes('Invalid token') ||
+    error.message.includes('Token expired')
+  )) {
+    console.warn('Authentication error detected in router, refreshing token')
+    const authStore = useAuthStore()
+    
+    // Try to refresh the token without disrupting the user
+    authStore.refreshToken().catch(() => {
+      // If refresh fails, redirect to login
+      console.error('Token refresh failed after error, redirecting to login')
+      router.push('/auth/login')
+    })
   }
 })
 
