@@ -329,6 +329,13 @@ app.get('/health/db', (req, res) => {
 
 // Mount routers
 app.use('/', authRouter);
+
+// Add redirect for /me endpoint to maintain frontend compatibility
+app.get('/me', authRouter.authenticateToken, (req, res, next) => {
+  req.url = '/users/me';
+  app._router.handle(req, res, next);
+});
+
 app.use('/users', userRouter);
 app.use('/', passwordResetRouter);
 
