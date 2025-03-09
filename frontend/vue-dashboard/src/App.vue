@@ -8,13 +8,21 @@
 import { onMounted } from 'vue';
 import { useAuthStore } from './stores/auth';
 import { useRouter } from 'vue-router';
+import { useThemeManager } from './composables/useTheme';
 
 const authStore = useAuthStore();
 const router = useRouter();
+const { setTheme } = useThemeManager();
 
 onMounted(async () => {
   // Initialize auth store
   await authStore.init();
+
+  // Initialize theme
+  const storedTheme = localStorage.getItem('mcp_theme');
+  if (storedTheme) {
+    setTheme(storedTheme);
+  }
 });
 </script>
 

@@ -49,6 +49,57 @@ const vuetify = createVuetify({
           info: '#64b5f6',
           success: '#81c784'
         }
+      },
+      'midnight-nebula': {
+        dark: true,
+        colors: {
+          primary: '#2D1B54',
+          secondary: '#1A1048',
+          accent: '#FF00FF',
+          tertiary: '#00FFFF',
+          error: '#FF5252',
+          info: '#7B52CC',
+          success: '#3A2B69',
+          warning: '#A020F0',
+          background: '#121212',
+          surface: '#1E1E1E',
+          'on-background': '#E0E0E0',
+          'on-surface': '#E0E0E0'
+        }
+      },
+      'eco-tech': {
+        dark: false,
+        colors: {
+          primary: '#2E7D32',
+          secondary: '#7CB342',
+          tertiary: '#607D8B',
+          accent: '#009688',
+          error: '#D32F2F',
+          info: '#4DB6AC',
+          success: '#388E3C',
+          warning: '#F57C00',
+          background: '#FFFFFF',
+          surface: '#F5F5F5',
+          'on-background': '#263238',
+          'on-surface': '#263238'
+        }
+      },
+      'corporate-clarity': {
+        dark: false,
+        colors: {
+          primary: '#0D47A1',
+          secondary: '#4285F4',
+          accent: '#FF9800',
+          tertiary: '#1565C0',
+          error: '#D32F2F',
+          info: '#64B5F6',
+          success: '#388E3C',
+          warning: '#FFB74D',
+          background: '#FFFFFF',
+          surface: '#F5F5F5',
+          'on-background': '#263238',
+          'on-surface': '#263238'
+        }
       }
     }
   }

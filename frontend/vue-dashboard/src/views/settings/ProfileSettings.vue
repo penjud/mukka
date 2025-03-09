@@ -36,7 +36,10 @@
               :items="[
                 { title: 'Light', value: 'light' },
                 { title: 'Dark', value: 'dark' },
-                { title: 'System', value: 'system' }
+                { title: 'System', value: 'system' },
+                { title: 'Midnight Nebula', value: 'midnight-nebula' },
+                { title: 'Eco-Tech', value: 'eco-tech' },
+                { title: 'Corporate Clarity', value: 'corporate-clarity' }
               ]"
               variant="outlined"
             ></v-select>
@@ -54,15 +57,22 @@
 </template>
 
 <script>
+import { useThemeManager } from '../../composables/useTheme';
+
 export default {
   name: 'ProfileSettings',
+  
+  setup() {
+    const { setTheme } = useThemeManager();
+    return { setTheme };
+  },
   
   data() {
     return {
       profileData: {
         name: 'User Name',
         email: 'user@example.com',
-        theme: 'system'
+        theme: localStorage.getItem('mcp_theme') || 'system'
       },
       message: '',
       messageType: 'info'
@@ -72,16 +82,24 @@ export default {
   mounted() {
     // Simple load profile
     setTimeout(() => {
+      // Keep the theme from data, but update other fields
+      const currentTheme = this.profileData.theme;
       this.profileData = {
         name: 'John Doe',
         email: 'john.doe@example.com',
-        theme: 'light'
+        theme: currentTheme
       }
     }, 500)
   },
   
   methods: {
     simpleSubmit() {
+      // Apply the selected theme
+      this.setTheme(this.profileData.theme);
+      
+      // Store theme in localStorage
+      localStorage.setItem('mcp_theme', this.profileData.theme);
+      
       // Simple submit without complex logic
       this.message = 'Profile updated successfully'
       this.messageType = 'success'
