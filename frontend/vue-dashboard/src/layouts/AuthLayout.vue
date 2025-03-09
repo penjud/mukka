@@ -10,7 +10,7 @@
                   <v-avatar size="80" color="primary" class="mb-4">
                     <v-icon size="48" color="white">mdi-shield-account</v-icon>
                   </v-avatar>
-                  <h2 class="text-h4 font-weight-bold primary--text">MCP Dashboard</h2>
+                  <h2 class="text-h4 font-weight-bold primary--text">MukkaAI Dashboard</h2>
                 </div>
               </v-card-title>
               
@@ -24,7 +24,7 @@
               <v-card-actions class="d-flex justify-center mt-4">
                 <div class="text-caption text-center text-medium-emphasis">
                   <v-icon small color="info">mdi-information-outline</v-icon>
-                  Mothership Command Platform &copy; {{ new Date().getFullYear() }}
+                  MukkaAI &copy; {{ new Date().getFullYear() }}
                 </div>
               </v-card-actions>
             </v-card>

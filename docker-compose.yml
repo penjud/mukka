@@ -46,6 +46,8 @@ services:
     environment:
       - PORT=${FILESYSTEM_MCP_PORT}
       - BASE_SERVER_URL=http://mcp-base-server:${BASE_MCP_PORT}
+    volumes:
+      - /home/mothership:/home/mothership  # Add volume mount for mukka_vault access
     networks:
       - mukka-network
     depends_on:

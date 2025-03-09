@@ -1,6 +1,6 @@
 <template>
   <div class="memory-manager">
-    <h2>Memory MCP Manager</h2>
+    <h2>Memory Manager</h2>
     
     <div class="control-panel">
       <div class="search-box">

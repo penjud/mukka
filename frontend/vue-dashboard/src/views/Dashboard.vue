@@ -7,10 +7,10 @@
             Welcome, {{ user.name || user.username || 'User' }}
           </v-card-title>
           <v-card-subtitle>
-            MCP Dashboard - Your Personal Command Center
+            MukkaAI Dashboard - Your Personal Command Center
           </v-card-subtitle>
           <v-card-text>
-            <p>Select an option below to get started with your MCP experience.</p>
+            <p>Select an option below to get started with your MukkaAI experience.</p>
           </v-card-text>
         </v-card>
       </v-col>
@@ -75,53 +75,18 @@
       </v-col>
     </v-row>
     
-    <!-- System Status -->
-    <v-row class="mt-6">
-      <v-col cols="12">
-        <v-card>
-          <v-card-title class="text-h6">
-            <v-icon start color="primary" class="me-2">mdi-server</v-icon>
-            System Status
-          </v-card-title>
-          <v-card-text>
-            <v-row>
-              <v-col v-for="(service, key) in services" :key="key" cols="12" sm="6" md="4" lg="3">
-                <v-card variant="outlined" class="service-card">
-                  <v-card-item>
-                    <template v-slot:prepend>
-                      <v-icon :color="service.status ? 'success' : 'error'" :icon="service.icon"></v-icon>
-                    </template>
-                    <v-card-title>{{ service.name }}</v-card-title>
-                    <v-card-subtitle>
-                      <v-chip
-                        :color="service.status ? 'success' : 'error'"
-                        size="small"
-                        class="mt-1"
-                      >
-                        {{ service.status ? 'Online' : 'Offline' }}
-                      </v-chip>
-                    </v-card-subtitle>
-                  </v-card-item>
-                </v-card>
-              </v-col>
-            </v-row>
-          </v-card-text>
-        </v-card>
-      </v-col>
-    </v-row>
+    <!-- System Status section removed as per handover doc -->
   </div>
 </template>
 
 <script setup>
 import { computed } from 'vue';
 import { useAuthStore } from '../stores/auth';
-import { serviceStore } from '../services/discovery';
 
 const authStore = useAuthStore();
 
 // Computed properties
 const user = computed(() => authStore.userProfile || {});
-const services = computed(() => serviceStore.services);
 </script>
 
 <style scoped>

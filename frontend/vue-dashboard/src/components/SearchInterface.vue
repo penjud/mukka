@@ -1,6 +1,6 @@
 <template>
   <div class="search-interface">
-    <h2>Brave Search MCP</h2>
+    <h2>Brave Search</h2>
     
     <div class="search-container">
       <div class="search-input">

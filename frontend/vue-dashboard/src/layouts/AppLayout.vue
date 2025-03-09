@@ -5,7 +5,7 @@
       <v-app-bar-nav-icon @click="drawer = !drawer"></v-app-bar-nav-icon>
       
       <v-toolbar-title class="text-h5 font-weight-bold">
-        MCP Dashboard
+        MukkaAI Dashboard
       </v-toolbar-title>
       
       <v-spacer></v-spacer>
@@ -15,8 +15,12 @@
         <template v-slot:activator="{ props }">
           <v-btn icon v-bind="props">
             <v-avatar color="secondary" size="36">
-              <v-icon v-if="!user.avatar" color="white">mdi-account</v-icon>
-              <img v-else :src="user.avatar" alt="User Avatar" />
+              <v-img 
+                v-if="userProfileStore.avatarUrl" 
+                :src="userProfileStore.avatarUrl" 
+                alt="User Avatar" 
+              />
+              <v-icon v-else color="white">mdi-account</v-icon>
             </v-avatar>
           </v-btn>
         </template>
@@ -50,8 +54,12 @@
       <v-list-item class="pa-4">
         <template v-slot:prepend>
           <v-avatar color="secondary" size="40">
-            <v-icon v-if="!user.avatar" color="white">mdi-account</v-icon>
-            <img v-else :src="user.avatar" alt="User Avatar" />
+            <v-img 
+              v-if="userProfileStore.avatarUrl" 
+              :src="userProfileStore.avatarUrl" 
+              alt="User Avatar" 
+            />
+            <v-icon v-else color="white">mdi-account</v-icon>
           </v-avatar>
         </template>
         
@@ -151,6 +159,7 @@
 import { ref, computed, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { useAuthStore } from '../stores/auth';
+import { useUserProfileStore } from '../stores/userProfile';
 import { startDiscovery } from '../services/discovery';
 import SimpleFooter from '../components/SimpleFooter.vue';
 import SessionWarning from '../components/SessionWarning.vue';
@@ -159,6 +168,7 @@ import SessionWarning from '../components/SessionWarning.vue';
 const drawer = ref(false);
 const logoutDialog = ref(false);
 const authStore = useAuthStore();
+const userProfileStore = useUserProfileStore();
 const router = useRouter();
 
 // Computed properties
@@ -168,6 +178,7 @@ const isAdmin = computed(() => authStore.isAdmin);
 // Initialize auth store and start service discovery
 onMounted(async () => {
   await authStore.init();
+  await userProfileStore.init();
   startDiscovery();
 });
 

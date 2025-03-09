@@ -1,6 +1,6 @@
 <template>
   <div class="service-status-container">
-    <h2>MCP Service Status</h2>
+    <h2>MukkaAI Service Status</h2>
     
     <div class="service-grid">
       <div 

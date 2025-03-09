@@ -364,12 +364,12 @@ watch(() => showAgentDialog.value, (val) => {
 onMounted(async () => {
   debugInfo.value.push('Component mounted');
   
-  // Check the Memory MCP service status
+  // Check the Memory service status
   try {
     const statusCheck = await mcpApi.get('memory', '/health');
-    debugInfo.value.push(`Memory MCP health check: ${JSON.stringify(statusCheck)}`);
+    debugInfo.value.push(`Memory health check: ${JSON.stringify(statusCheck)}`);
   } catch (error) {
-    debugInfo.value.push(`Error checking Memory MCP health: ${error.message}`);
+    debugInfo.value.push(`Error checking Memory health: ${error.message}`);
   }
   
   // Load models first
@@ -394,7 +394,7 @@ watch(() => showCreateAgentDialog.value, (val) => {
 // Load all agents from the server
 async function loadAgents() {
   try {
-    debugInfo.value.push('Loading agents from Memory MCP...');
+    debugInfo.value.push('Loading agents from Memory service...');
     const response = await mcpApi.get('memory', '/api/agents');
     debugInfo.value.push(`Agents response: ${JSON.stringify(response)}`);
     agents.value = response || [];
@@ -448,13 +448,13 @@ async function debugSaveAgent() {
   debugInfo.value.push(`Form data: ${JSON.stringify(agentFormData)}`);
   
   try {
-    debugInfo.value.push('Checking Memory MCP service status...');
+    debugInfo.value.push('Checking Memory service status...');
     const service = serviceStore.services['memory'];
     debugInfo.value.push(`Memory service status: ${JSON.stringify(service)}`);
     
     if (!service || !service.status) {
-      debugInfo.value.push('Memory MCP service is not available');
-      throw new Error('Memory MCP service is not available');
+      debugInfo.value.push('Memory service is not available');
+      throw new Error('Memory service is not available');
     }
     
     let response;

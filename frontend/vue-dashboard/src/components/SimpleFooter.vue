@@ -2,7 +2,7 @@
   <div class="simple-footer">
     <div class="footer-content">
       <div class="copyright">
-        <v-icon small color="info" class="mr-1">mdi-information-outline</v-icon>
+        <v-icon small color="info" class="me-2">mdi-information-outline</v-icon>
         MukkaAI &copy; {{ new Date().getFullYear() }}
       </div>
       <div class="links">

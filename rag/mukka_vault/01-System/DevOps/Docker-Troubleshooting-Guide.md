@@ -1,166 +1,238 @@
----
-title: Docker Troubleshooting Guide
-created: 2025-03-09 04:45:00
-modified: 2025-03-09 04:45:00
-tags:
-  - docker
-  - troubleshooting
-  - devops
-  - deployment
-  - vue-dashboard
-  - development
-status: complete
----
+# Docker Troubleshooting Guide for MukkaAI
 
-# Docker Troubleshooting Guide for MCP
+## Common Docker Issues and Solutions
 
-This guide provides solutions for common Docker-related issues encountered when working with the MCP system.
+This guide provides solutions for common Docker-related issues that might occur with the MukkaAI system deployment.
 
-## Common Issues and Solutions
+## Issue: Changes Not Appearing in Browser
 
-### 1. "No such image" Error During Container Recreation
+### Symptoms
+- You've made changes to files but don't see them in the browser
+- The old version of the site/application is still showing
 
-**Problem:**
-When trying to restart or recreate a container, you see an error like:
-```
-ERROR: for vue-dashboard No such image: sha256:100f811c7a7159559b105524c88f6d3561201ef22c8a99b264dba4466b62d82c
-ERROR: The image for the service you're trying to recreate has been removed.
-```
+### Solutions
 
-**Solution:**
-This happens when Docker can't find the image reference it expects. To fix:
-
-1. Use our maintenance scripts:
+1. **Check Volume Mounts**
    ```bash
-   # For Vue Dashboard issues:
-   ./scripts/rebuild-vue-dashboard.sh
+   # View the docker-compose.yml file
+   cat docker-compose.yml
    
-   # For rebuilding everything:
-   ./scripts/rebuild-all.sh
+   # Verify the filesystem server has the correct volume mount
+   # Should have: /home/mothership:/home/mothership
    ```
 
-2. Manual fix:
+2. **Verify Container Rebuild**
    ```bash
-   # Remove the problematic container
-   docker-compose rm -f vue-dashboard
+   # Check when containers were created
+   docker inspect mukka-vue-dashboard --format "{{.Created}}"
+   docker inspect mukka-mcp-filesystem-server --format "{{.Created}}"
    
-   # Rebuild the service
-   docker-compose build vue-dashboard
-   
-   # Start it again
-   docker-compose up -d vue-dashboard
+   # Rebuild specific containers
+   ./rebuild-filesystem-server.sh
+   ./rebuild-vue-dashboard.sh
    ```
 
-### 2. Container Networking Issues
+3. **Clear Browser Cache**
+   - Use Ctrl+F5 or Cmd+Shift+R to force refresh
+   - Try incognito/private browsing window
+   - Clear browser cache in browser settings
 
-**Problem:**
-Containers can't communicate with each other despite being on the same network.
+4. **Check Browser Console**
+   - Open browser developer tools (F12)
+   - Check for API errors in the Console tab
+   - Verify network requests to filesystem service
 
-**Solution:**
-- Ensure containers are using the correct hostnames in the Docker network
-- For the MCP system, containers should reference each other using their full container names (e.g., `mukka-mcp-auth-server`) not service names (e.g., `mcp-auth-server`)
-- Check the `docker-compose.yml` file to confirm all services are on the `mukka-network`
-
-### 3. Service Discovery Problems
-
-**Problem:**
-The Vue Dashboard can't discover or connect to backend services.
-
-**Solution:**
-1. Check the nginx.conf file to ensure it's properly configured:
-   ```
-   location /api/auth/ {
-       proxy_pass http://mukka-mcp-auth-server:8097/;
-       # other proxy settings...
-   }
-   ```
-
-2. Review the frontend's service discovery configuration in `src/config/mcp-endpoints.js`
-
-### 4. Port Conflicts
-
-**Problem:**
-Container fails to start due to port conflicts.
-
-**Solution:**
-1. Check if ports are already in use:
+5. **Restart Containers**
    ```bash
+   # Restart Vue Dashboard
+   docker restart mukka-vue-dashboard
+   
+   # Restart filesystem container
+   docker restart mukka-mcp-filesystem-server
+   ```
+
+## Issue: Port Conflicts
+
+### Symptoms
+- Container fails to start
+- Error messages about port binding failures
+
+### Solutions
+
+1. **Identify Conflicting Process**
+   ```bash
+   # Check what's using a specific port
    sudo lsof -i :<port_number>
+   
+   # Example
+   sudo lsof -i :8095
    ```
 
-2. Stop the conflicting service or change the port mapping in `docker-compose.yml`
+2. **Modify Port Configuration**
+   - Edit the .env file to use different ports
+   - Update docker-compose.yml if necessary
+   - Update frontend configuration in mcp-endpoints.js
 
-## Preventative Measures
-
-To avoid Docker image and container issues:
-
-1. **Always use build instructions** instead of direct image references in docker-compose.yml:
-   ```yaml
-   vue-dashboard:
-     build:
-       context: ./frontend/vue-dashboard
-       dockerfile: Dockerfile
-     # instead of: image: mukka_vue-dashboard:latest
-   ```
-
-2. **Use the maintenance scripts**:
-   - `./scripts/rebuild-vue-dashboard.sh` - Rebuilds just the Vue Dashboard
-   - `./scripts/rebuild-all.sh` - Rebuilds all services
-
-3. **Regularly clean up Docker resources**:
+3. **Stop Conflicting Service**
    ```bash
-   # Remove unused images
-   docker image prune
+   # If it's another process
+   sudo systemctl stop <service_name>
    
-   # Remove unused containers
-   docker container prune
+   # If it's another container
+   docker stop <container_name>
+   ```
+
+## Issue: Container Communication Problems
+
+### Symptoms
+- Services can't connect to each other
+- "Connection refused" errors in logs
+
+### Solutions
+
+1. **Check Docker Network**
+   ```bash
+   # List networks
+   docker network ls
    
-   # Remove all unused resources
+   # Inspect the network
+   docker network inspect mukka-network
+   
+   # Make sure all containers are on the same network
+   ```
+
+2. **Check Service Discovery**
+   - Verify service endpoints in frontend/vue-dashboard/src/config/mcp-endpoints.js
+   - Make sure container names match the expected hostnames
+
+3. **Test Connectivity**
+   ```bash
+   # Enter a container to test connectivity
+   docker exec -it mukka-mcp-base-server sh
+   
+   # Try to connect to another service
+   wget -O- http://mcp-filesystem-server:8095/health
+   ```
+
+## Issue: Volume Mounting Problems
+
+### Symptoms
+- Files are not accessible inside containers
+- Changes to files not reflected in containers
+
+### Solutions
+
+1. **Check Docker Compose Configuration**
+   ```bash
+   # Verify volume mounts in docker-compose.yml
+   grep -A 3 volumes docker-compose.yml
+   ```
+
+2. **Verify Directory Permissions**
+   ```bash
+   # Check permissions on host directory
+   ls -la /home/mothership/mukka/rag/mukka_vault/
+   
+   # Check permissions inside container
+   docker exec -it mukka-mcp-filesystem-server ls -la /home/mothership/mukka/rag/mukka_vault/
+   ```
+
+3. **Test File Access**
+   ```bash
+   # Test file access from inside container
+   docker exec -it mukka-mcp-filesystem-server cat /home/mothership/mukka/rag/mukka_vault/01-System/Documentation/MukkaAI_System_Architecture.md
+   ```
+
+## Issue: Docker Compose Build Failures
+
+### Symptoms
+- Build process fails with errors
+- Containers fail to start after build
+
+### Solutions
+
+1. **Check Docker Logs**
+   ```bash
+   # View logs for a specific container
+   docker logs mukka-mcp-filesystem-server
+   
+   # Follow logs in real-time
+   docker logs -f mukka-vue-dashboard
+   ```
+
+2. **Clean and Rebuild**
+   ```bash
+   # Stop all containers
+   docker-compose down
+   
+   # Remove old images (optional, use with caution)
+   docker-compose down --rmi local
+   
+   # Rebuild everything
+   docker-compose up --build -d
+   ```
+
+3. **Check Disk Space**
+   ```bash
+   # Verify sufficient disk space
+   df -h
+   
+   # Clean up unused Docker resources
    docker system prune
    ```
 
-## Debugging Techniques
+## Quick Reference: Common Docker Commands
 
-When troubleshooting Docker issues:
+```bash
+# List running containers
+docker ps
 
-1. **Check container logs**:
-   ```bash
-   docker logs mukka-vue-dashboard
-   ```
+# List all containers (including stopped)
+docker ps -a
 
-2. **Inspect network settings**:
-   ```bash
-   docker network inspect mukka_mukka-network
-   ```
+# View container logs
+docker logs <container_name>
 
-3. **Enter a running container**:
-   ```bash
-   docker exec -it mukka-vue-dashboard /bin/sh
-   ```
+# Execute command in container
+docker exec -it <container_name> <command>
 
-4. **Check container health**:
-   ```bash
-   docker-compose ps
-   ```
+# Restart container
+docker restart <container_name>
 
-5. **Review environment variables**:
-   ```bash
-   docker exec mukka-vue-dashboard env
-   ```
+# Stop container
+docker stop <container_name>
 
-## Reference
+# Remove container
+docker rm <container_name>
 
-### Important Files
+# List images
+docker images
 
-- **Docker Compose**: `/home/mothership/mukka/docker-compose.yml`
-- **Vue Dashboard Nginx Config**: `/home/mothership/mukka/frontend/vue-dashboard/nginx.conf`
-- **Dockerfile**: `/home/mothership/mukka/frontend/vue-dashboard/Dockerfile`
-- **Maintenance Scripts**: `/home/mothership/mukka/scripts/`
+# Remove image
+docker rmi <image_id>
 
-### Container Naming Convention
+# Clean up system
+docker system prune
+```
 
-For MCP services, we use the following naming convention:
-- Container names: `mukka-mcp-<service>-server` (e.g., `mukka-mcp-auth-server`)
-- Service names in docker-compose: `mcp-<service>-server` (e.g., `mcp-auth-server`)
+## MukkaAI Specific Commands
 
-Always use the full container name when referencing containers in Nginx configurations or other Docker service discovery mechanisms.
+```bash
+# Rebuild everything
+cd /home/mothership/mukka/
+docker-compose down
+docker-compose up --build -d
+
+# Rebuild specific services
+./rebuild-filesystem-server.sh
+./rebuild-vue-dashboard.sh
+
+# Check logs for specific services
+docker logs mukka-mcp-filesystem-server
+docker logs mukka-vue-dashboard
+
+# Back up to GitHub
+./backup-to-github.sh
+```
+
+Remember: Always back up your changes to GitHub before making major changes to the Docker configuration. The backup script ensures you can recover your system even if the local environment is lost.

@@ -1,41 +1,41 @@
 /**
- * MCP Services Configuration
+ * MukkaAI Services Configuration
  * 
- * This file contains the configuration for all MCP service endpoints.
+ * This file contains the configuration for all MukkaAI service endpoints.
  * Update these values to match your Docker container setup.
  */
 
 export const MCP_SERVICES = {
-  // Base MCP Server
+  // Base Server
   base: {
-    name: 'Base MCP Server',
+    name: 'Base Server',
     endpoint: 'http://localhost:8090',
     status: false,
     icon: 'mdi-server',
-    description: 'Core MCP server providing base functionality'
+    description: 'Core server providing base functionality'
   },
   
-  // Memory MCP Server
+  // Memory Server
   memory: {
-    name: 'Memory MCP',
+    name: 'Memory Service',
     endpoint: 'http://localhost:8094',
     status: false,
     icon: 'mdi-memory',
     description: 'Knowledge graph and memory storage'
   },
   
-  // Filesystem MCP Server
+  // Filesystem Server
   filesystem: {
-    name: 'Filesystem MCP',
+    name: 'Filesystem Service',
     endpoint: 'http://localhost:8095',
     status: false,
     icon: 'mdi-folder',
     description: 'File browsing and management'
   },
   
-  // Brave Search MCP Server
+  // Brave Search Server
   braveSearch: {
-    name: 'Brave Search MCP',
+    name: 'Brave Search',
     endpoint: 'http://localhost:8096',
     status: false,
     icon: 'mdi-search-web',
@@ -62,7 +62,7 @@ export const MCP_SERVICES = {
   
   // Web UI
   webUi: {
-    name: 'MCP Web UI',
+    name: 'MukkaAI Web UI',
     endpoint: 'http://localhost:3001',
     status: true,
     icon: 'mdi-monitor-dashboard',

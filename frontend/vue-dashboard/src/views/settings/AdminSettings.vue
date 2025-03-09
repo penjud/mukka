@@ -104,7 +104,7 @@
                       <v-text-field
                         label="System Name"
                         variant="outlined"
-                        value="Mothership Command Platform"
+                        value="MukkaAI"
                       ></v-text-field>
                     </v-col>
                     
@@ -155,7 +155,7 @@
                       <v-textarea
                         label="Welcome Message"
                         variant="outlined"
-                        value="Welcome to the Mothership Command Platform!"
+                        value="Welcome to MukkaAI!"
                       ></v-textarea>
                     </v-col>
                     
