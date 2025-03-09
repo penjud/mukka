@@ -1,0 +1,26 @@
+{
+  "users": [
+    {
+      "username": "admin",
+      "passwordHash": "$2b$10$gfqQiZM.zk566.F14h.ngO9fAzZgn5K9PObNKTLQK7pRJUYh4t5gC",
+      "role": "admin",
+      "createdAt": "2025-03-08T23:50:40.970Z",
+      "email": "admin@example.com"
+    }
+  ],
+  "refreshTokens": {
+    "1741486264145": {
+      "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6ImFkbWluIiwiaWF0IjoxNzQxNDg2MjY0LCJleHAiOjE3NDIwOTEwNjR9.9y9wfQwJYQBaSYEz4UfeQxTsXPQtjCMZzxLgk8JeEKM",
+      "username": "admin",
+      "createdAt": "2025-03-09T02:11:04.145Z",
+      "expiresAt": "2025-03-16T02:11:04.145Z"
+    },
+    "1741486440838": {
+      "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6ImFkbWluIiwiaWF0IjoxNzQxNDg2NDQwLCJleHAiOjE3NDIwOTEyNDB9.3JeDeLyFGmr-kELnEST_vRkDAqIk4KXSZJuO4cRRUl8",
+      "username": "admin",
+      "createdAt": "2025-03-09T02:14:00.838Z",
+      "expiresAt": "2025-03-16T02:14:00.838Z"
+    }
+  },
+  "passwordResetTokens": {}
+}

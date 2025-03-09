@@ -122,13 +122,12 @@
       </v-container>
     </v-main>
     
-    <!-- Footer with service status -->
+    <!-- Session expiration warning -->
+    <SessionWarning />
+    
+    <!-- Simple footer -->
     <v-footer app class="pa-0">
-      <v-row no-gutters>
-        <v-col cols="12">
-          <ServiceStatus />
-        </v-col>
-      </v-row>
+      <SimpleFooter />
     </v-footer>
   </v-app>
 </template>
@@ -138,7 +137,8 @@ import { ref, computed, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { useAuthStore } from '../stores/auth';
 import { startDiscovery } from '../services/discovery';
-import ServiceStatus from '../components/ServiceStatus.vue';
+import SimpleFooter from '../components/SimpleFooter.vue';
+import SessionWarning from '../components/SessionWarning.vue';
 
 // Component state
 const drawer = ref(false);

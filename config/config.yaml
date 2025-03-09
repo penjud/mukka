@@ -1,0 +1,18 @@
+port: 3001
+logLevel: info
+logMode: text
+systemPrompt: You are a helpful assistant.
+
+llm:
+  provider: anthropic
+  model: claude-3-5-sonnet-20241022
+  parameters:
+    temperature: 0.7
+    maxTokens: 1000
+
+# MCP Server Configurations using correct IP and ports
+mcpSSEServers:
+  - url: http://mothership_mcp-memory_1:8000
+    maxPayloadSize: 1024000
+  - url: http://mothership_mcp-filesystem_1:8000
+    maxPayloadSize: 1024000

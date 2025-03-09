@@ -3,6 +3,7 @@ import { createPinia } from 'pinia';
 import App from './App.vue';
 import router from './router';
 import { startDiscovery } from './services/discovery';
+import { initFetchOverride } from './services/fetch-override';
 import { useAuthStore } from './stores/auth';
 
 // Vuetify
@@ -74,6 +75,9 @@ authStore.init().then(() => {
 
 // Start service discovery
 startDiscovery();
+
+// Initialize fetch API override
+initFetchOverride();
 
 // Mount app
 app.mount('#app');

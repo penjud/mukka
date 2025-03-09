@@ -4,26 +4,6 @@
     "type": "split",
     "children": [
       {
-        "id": "21cf34155da355c5",
-        "type": "tabs",
-        "children": [
-          {
-            "id": "dcf1ca95dc044414",
-            "type": "leaf",
-            "state": {
-              "type": "markdown",
-              "state": {
-                "file": "05-Reference/Snippets/01-Handover-Process.md",
-                "mode": "source",
-                "source": false
-              },
-              "icon": "lucide-file",
-              "title": "01-Handover-Process"
-            }
-          }
-        ]
-      },
-      {
         "id": "72976ba4ec8f309c",
         "type": "tabs",
         "children": [
@@ -33,12 +13,12 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "01-System/Handovers/2025-03-07_13-40_Handover.md",
+                "file": "01-System/Handovers/2025-03-09_12-45_Auth_Server_bcryptjs_Implementation.md",
                 "mode": "source",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "2025-03-07_13-40_Handover"
+              "title": "2025-03-09_12-45_Auth_Server_bcryptjs_Implementation"
             }
           }
         ]
@@ -98,7 +78,7 @@
       }
     ],
     "direction": "horizontal",
-    "width": 300
+    "width": 338.5
   },
   "right": {
     "id": "114edfc35b1d9d52",
@@ -114,7 +94,7 @@
             "state": {
               "type": "backlink",
               "state": {
-                "file": "01-System/Handovers/2025-03-07_13-40_Handover.md",
+                "file": "01-System/Handovers/2025-03-08_13-22_Handover.md",
                 "collapseAll": false,
                 "extraContext": false,
                 "sortOrder": "alphabetical",
@@ -124,7 +104,7 @@
                 "unlinkedCollapsed": true
               },
               "icon": "links-coming-in",
-              "title": "Backlinks for 2025-03-07_13-40_Handover"
+              "title": "Backlinks for 2025-03-08_13-22_Handover"
             }
           },
           {
@@ -162,37 +142,17 @@
             "state": {
               "type": "outline",
               "state": {
-                "file": "Welcome.md",
+                "file": "01-System/Handovers/2025-03-09_12-45_Auth_Server_bcryptjs_Implementation.md",
                 "followCursor": false,
                 "showSearch": false,
                 "searchQuery": ""
               },
               "icon": "lucide-list",
-              "title": "Outline of Welcome"
-            }
-          },
-          {
-            "id": "08f016a500ef9e2c",
-            "type": "leaf",
-            "state": {
-              "type": "smart-connections-view",
-              "state": {},
-              "icon": "smart-connections",
-              "title": "Smart Connections"
-            }
-          },
-          {
-            "id": "99bec1cd4627df25",
-            "type": "leaf",
-            "state": {
-              "type": "smart-chat-view",
-              "state": {},
-              "icon": "message-square",
-              "title": "Smart Chat"
+              "title": "Outline of 2025-03-09_12-45_Auth_Server_bcryptjs_Implementation"
             }
           }
         ],
-        "currentTab": 5
+        "currentTab": 3
       }
     ],
     "direction": "horizontal",
@@ -205,41 +165,46 @@
       "canvas:Create new canvas": false,
       "daily-notes:Open today's daily note": false,
       "templates:Insert template": false,
-      "command-palette:Open command palette": false,
-      "templater-obsidian:Templater": false,
-      "obsidian-excalidraw-plugin:New drawing": false,
-      "omnisearch:Omnisearch": false,
-      "smart-connections:Open: View Smart Connections": false,
-      "smart-connections:Open: Smart Chat Conversation": false,
-      "smart-connections-visualizer:Open smart connections visualizer": false,
-      "bbawj-semantic-search:Semantic Search": false
+      "command-palette:Open command palette": false
     }
   },
   "active": "74f91af6215c3280",
   "lastOpenFiles": [
-    "01-System/Handovers/2025-03-07_13-15_Handover.md",
-    "01-System/Handovers/2025-03-07_13-40_Handover.md",
-    "01-System/01-System-Overview.md",
-    "05-Reference/Snippets/01-Handover-Process.md",
-    "_templates/snippet.md",
-    "04-AI_Conversations/2025-03-07/12-29_PlanningMCP.md",
-    "_templates/ai-conversation.md",
-    "Welcome.md",
+    "01-System/Handovers/2025-03-09_17-30_MCP_Docker_Authentication_Resolution.md",
+    "01-System/Handovers/2025-03-09_17-15_Vue_Login_Form_Fix.md",
+    "01-System/Handovers/2025-03-09_17-05_Service_Discovery_Fix.md",
+    "01-System/Handovers/2025-03-09_16-55_Auth_Server_Registration_Fix.md",
+    "01-System/Handovers/2025-03-09_16-45_Auth_Server_Docker_Networking_Fix_Resolution.md",
+    "01-System/DevOps/Docker-Troubleshooting-Guide.md",
+    "01-System/DevOps",
+    "01-System/Handovers/2025-03-09_14-43_Auth_Server_Docker_Networking_Fix.md",
+    "01-System/Handovers/2025-03-09_13-54_Auth_Server_Production_Environment_Fix.md",
+    "01-System/Handovers/2025-03-09_13-15_Auth_Server_bcryptjs_Implementation_Fix.md",
+    "01-System/Handovers/2025-03-09_12-30_Auth_Docker_Integration_Issue.md",
+    "01-System/Handovers/2025-03-09_12-14_Deployment_Status.md",
+    "01-System/Handovers/2025-03-09_12-11_Password_Verification_Fix.md",
+    "01-System/Handovers/2025-03-09_12-45_Auth_Server_bcryptjs_Implementation.md",
+    "01-System/Project Status/MCP_Deployment_Checklist.md",
+    "01-System/Handovers/2025-03-09_10-58_MCP_MongoDB_Auth_Integration.md",
+    "01-System/Handovers/2025-03-09_10-15_MongoDB_Integration_Implementation.md",
+    "01-System/Handovers/2025-03-09_14-30_Auth_Implementation_Update.md",
+    "01-System/Handovers/2025-03-09_09-30_Auth_Implementation_Update.md",
+    "01-System/Handovers/2025-03-08_16-05_ProfileSettings_Button_Fix.md",
+    "01-System/MCP Deployment Checklist.md",
+    "01-System/Handovers/2025-03-08_15-10_Handover.md",
+    "01-System/Handovers/2025-03-08_15-08_Vue_Dashboard_Fix.md",
+    "01-System/Handovers/2025-03-08_15-07_Profile_Settings_Fix.md",
+    "01-System/Handovers/2025-03-08_13-22_Handover.md",
+    "01-System/Handovers/2025-03-08_Vue_Dashboard_Fix_Summary.md",
+    "01-System/Handovers/2025-03-08_Profile_Settings_Fix_Summary.md",
+    "01-System/Documentation",
+    "01-System/Testing",
+    "01-System/Fixes",
+    "01-System/Advanced Features",
+    "01-System/Project Status",
+    "Handovers",
+    "MCP",
     "05-Reference/Snippets",
-    "01-System/Handovers/current-handover.md",
-    "_templates/handover.md",
-    "01-System/Handovers",
-    "04-AI_Conversations/2025-03-07",
-    "02-Projects/01-MCP-Setup-Project.md",
-    "_templates/edit-history.md",
-    "_templates/project.md",
-    "_templates/general-note.md",
-    "05-Reference",
-    "04-AI_Conversations",
-    "03-Research",
-    "02-Projects",
-    "01-System",
-    "_resources",
-    "_templates"
+    "01-System/Handovers"
   ]
 }

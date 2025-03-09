@@ -9,12 +9,12 @@ import AuthLayout from '../layouts/AuthLayout.vue'
 import Login from '../views/auth/Login.vue'
 import Register from '../views/auth/Register.vue'
 import ForgotPassword from '../views/auth/ForgotPassword.vue'
+import ResetPassword from '../views/auth/ResetPassword.vue'
 
 // Main application views
 import Dashboard from '../views/Dashboard.vue'
 import PersonalWorkspace from '../views/workspace/PersonalWorkspace.vue'
 import AgentManagement from '../views/agents/AgentManagement.vue'
-import ProfileSettings from '../views/settings/ProfileSettings.vue'
 import AdminSettings from '../views/settings/AdminSettings.vue'
 
 const routes = [
@@ -36,6 +36,11 @@ const routes = [
         path: 'forgot-password',
         name: 'ForgotPassword',
         component: ForgotPassword
+      },
+      {
+        path: 'reset-password',
+        name: 'ResetPassword',
+        component: ResetPassword
       }
     ]
   },
@@ -62,7 +67,7 @@ const routes = [
       {
         path: 'profile',
         name: 'ProfileSettings',
-        component: ProfileSettings
+        component: () => import('../views/ProfileSettingsNew.vue')
       },
       {
         path: 'admin',

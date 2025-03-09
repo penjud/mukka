@@ -33,13 +33,9 @@
       </v-container>
     </v-main>
     
-    <!-- System status indicator -->
+    <!-- Simple footer -->
     <v-footer app class="pa-0">
-      <v-row no-gutters>
-        <v-col cols="12">
-          <ServiceStatus />
-        </v-col>
-      </v-row>
+      <SimpleFooter />
     </v-footer>
   </v-app>
 </template>
@@ -47,7 +43,7 @@
 <script setup>
 import { onMounted } from 'vue';
 import { startDiscovery } from '../services/discovery';
-import ServiceStatus from '../components/ServiceStatus.vue';
+import SimpleFooter from '../components/SimpleFooter.vue';
 
 // Start service discovery when component mounts
 onMounted(() => {

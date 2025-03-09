@@ -1,0 +1,808 @@
+const express = require('express');
+const cors = require('cors');
+const bodyParser = require('body-parser');
+const winston = require('winston');
+const dotenv = require('dotenv');
+const jwt = require('jsonwebtoken');
+const bcrypt = require('bcrypt');
+const axios = require('axios');
+const cookieParser = require('cookie-parser');
+const fs = require('fs');
+const path = require('path');
+const rateLimit = require('express-rate-limit');
+
+// Load environment variables
+dotenv.config();
+
+// Create logger
+const logger = winston.createLogger({
+  level: process.env.LOG_LEVEL || 'info',
+  format: winston.format.json(),
+  defaultMeta: { service: 'mcp-auth-server' },
+  transports: [
+    new winston.transports.Console({
+      format: winston.format.simple(),
+    }),
+  ],
+});
+
+// Create Express app
+const app = express();
+const PORT = process.env.PORT || 8097;
+const BASE_SERVER_URL = process.env.BASE_SERVER_URL || 'http://mukka-mcp-base-server:8090';
+const JWT_SECRET = process.env.JWT_SECRET || 'your-super-secret-jwt-key';
+const REFRESH_TOKEN_SECRET = process.env.REFRESH_TOKEN_SECRET || 'your-super-secret-refresh-token-key';
+const ACCESS_TOKEN_EXPIRY = '1h'; // 1 hour for access tokens
+const REFRESH_TOKEN_EXPIRY = '7d'; // 7 days for refresh tokens
+const USERS_FILE_PATH = process.env.USERS_FILE_PATH || path.join(__dirname, '../data/users.json');
+
+// Configure rate limiter
+const loginLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 5, // 5 login attempts per IP in the window
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: {
+    error: 'Too many login attempts, please try again later',
+    status: 429,
+    remainingTime: (req, res) => res.getHeader('Retry-After')
+  }
+});
+
+const apiLimiter = rateLimit({
+  windowMs: 60 * 1000, // 1 minute
+  max: 100, // 100 requests per IP per minute
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: {
+    error: 'Too many requests, please try again later',
+    status: 429
+  }
+});
+
+// Ensure users directory exists
+const usersDir = path.dirname(USERS_FILE_PATH);
+if (!fs.existsSync(usersDir)) {
+  fs.mkdirSync(usersDir, { recursive: true });
+}
+
+// Load or create users file
+let usersData = { users: [], refreshTokens: {}, passwordResetTokens: {} };
+try {
+  if (fs.existsSync(USERS_FILE_PATH)) {
+    usersData = JSON.parse(fs.readFileSync(USERS_FILE_PATH, 'utf8'));
+    // Ensure objects exist
+    if (!usersData.refreshTokens) {
+      usersData.refreshTokens = {};
+    }
+    if (!usersData.passwordResetTokens) {
+      usersData.passwordResetTokens = {};
+    }
+    logger.info(`Loaded ${usersData.users.length} users from ${USERS_FILE_PATH}`);
+  } else {
+    // Create default admin user if file doesn't exist
+    const passwordHash = '$2b$10$gfqQiZM.zk566.F14h.ngO9fAzZgn5K9PObNKTLQK7pRJUYh4t5gC'; // Hash for 'admin123'
+    usersData = {
+      users: [
+        {
+          username: 'admin',
+          passwordHash,
+          role: 'admin',
+          createdAt: new Date().toISOString(),
+          email: 'admin@example.com' // Add default email for admin
+        }
+      ],
+      refreshTokens: {},
+      passwordResetTokens: {}
+    };
+    fs.writeFileSync(USERS_FILE_PATH, JSON.stringify(usersData, null, 2));
+    logger.info(`Default users file created at ${USERS_FILE_PATH}`);
+  }
+} catch (error) {
+  logger.error(`Error loading or creating users file: ${error.message}`);
+}
+
+// Save users to file
+const saveUsers = () => {
+  try {
+    fs.writeFileSync(USERS_FILE_PATH, JSON.stringify(usersData, null, 2));
+    logger.info(`Saved ${usersData.users.length} users to ${USERS_FILE_PATH}`);
+    return true;
+  } catch (error) {
+    logger.error(`Error saving users file: ${error.message}`);
+    return false;
+  }
+};
+
+// Middleware
+// Updated CORS to allow both frontend URLs
+app.use(cors({
+  origin: function(origin, callback) {
+    // Allow any origin in development, or from the allowed list in production
+    const allowedOrigins = [
+      process.env.CORS_ORIGIN || 'http://localhost:3001',
+      'http://localhost:3002',
+      'http://localhost:3000',  // Common development port
+      'http://localhost:8080',  // Another common Vue development port
+      'http://127.0.0.1:3001'   // Local address variant
+    ];
+    
+    // In development, allow requests with no origin (like mobile apps or curl)
+    if (!origin || allowedOrigins.indexOf(origin) !== -1 || process.env.NODE_ENV !== 'production') {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']
+}));
+app.use(bodyParser.json());
+app.use(cookieParser());
+
+// Apply general API rate limiter to all requests
+app.use(apiLimiter);
+
+// Security headers middleware
+app.use((req, res, next) => {
+  // Protect against XSS attacks
+  res.setHeader('X-XSS-Protection', '1; mode=block');
+  
+  // Prevent MIME type sniffing
+  res.setHeader('X-Content-Type-Options', 'nosniff');
+  
+  // Prevent clickjacking
+  res.setHeader('X-Frame-Options', 'DENY');
+  
+  // Strict Content Security Policy
+  res.setHeader('Content-Security-Policy', "default-src 'self'");
+  
+  // HTTP Strict Transport Security (when in production)
+  if (process.env.NODE_ENV === 'production') {
+    res.setHeader('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
+  }
+  
+  next();
+});
+
+// Log middleware for debugging requests
+app.use((req, res, next) => {
+  logger.info(`${req.method} ${req.path} ${JSON.stringify(req.body)}`);
+  next();
+});
+
+// Error handler middleware
+app.use((err, req, res, next) => {
+  const status = err.status || 500;
+  const message = err.message || 'Internal Server Error';
+  
+  logger.error(`Error (${status}): ${message}`);
+  if (err.stack) {
+    logger.error(err.stack);
+  }
+  
+  // Return error response with consistent format
+  res.status(status).json({
+    error: message,
+    status,
+    path: req.path,
+    timestamp: new Date().toISOString()
+  });
+});
+
+// Auth middleware
+const authenticateToken = (req, res, next) => {
+  const token = req.cookies.token || req.headers['authorization']?.split(' ')[1];
+  
+  if (!token) {
+    const err = new Error('Authentication required');
+    err.status = 401;
+    return next(err);
+  }
+  
+  try {
+    const user = jwt.verify(token, JWT_SECRET);
+    req.user = user;
+    next();
+  } catch (error) {
+    const err = new Error('Invalid or expired token');
+    err.status = 403;
+    return next(err);
+  }
+};
+
+// Admin middleware
+const requireAdmin = (req, res, next) => {
+  if (req.user.role !== 'admin') {
+    const err = new Error('Admin privileges required');
+    err.status = 403;
+    return next(err);
+  }
+  next();
+};
+
+// Register with base MCP server
+const registerWithBaseServer = async () => {
+  try {
+    const response = await axios.post(`${BASE_SERVER_URL}/services/register`, {
+      name: 'auth',
+      url: `http://mukka-mcp-auth-server:${PORT}`,
+      type: 'auth',
+      description: 'MCP Authentication Server'
+    });
+    logger.info('Registered with base MCP server', response.data);
+  } catch (error) {
+    logger.error('Failed to register with base MCP server:', error.message);
+    // Retry after delay
+    setTimeout(registerWithBaseServer, 5000);
+  }
+};
+
+// Routes
+app.get('/', (req, res) => {
+  res.json({
+    name: 'MCP Authentication Server',
+    version: '1.0.0',
+    status: 'running'
+  });
+});
+
+// Login route - apply login rate limiter
+app.post('/login', loginLimiter, async (req, res, next) => {
+  try {
+    const { username, password } = req.body;
+  
+    if (!username || !password) {
+      const err = new Error('Username and password required');
+      err.status = 400;
+      return next(err);
+    }
+    
+    const user = usersData.users.find(u => u.username === username);
+    
+    if (!user) {
+      logger.warn(`Login attempt for non-existent user: ${username}`);
+      const err = new Error('Invalid credentials');
+      err.status = 401;
+      return next(err);
+    }
+    
+    logger.info(`Comparing password for ${username}...`);
+    
+    const passwordMatch = await bcrypt.compare(password, user.passwordHash);
+    
+    if (!passwordMatch) {
+      logger.warn(`Password mismatch for user: ${username}`);
+      const err = new Error('Invalid credentials');
+      err.status = 401;
+      return next(err);
+    }
+    
+    logger.info(`Successful login for user: ${username}`);
+    
+    // Create access token with shorter expiry
+    const accessToken = jwt.sign(
+      { id: user.id, username: user.username, role: user.role },
+      JWT_SECRET,
+      { expiresIn: ACCESS_TOKEN_EXPIRY }
+    );
+    
+    // Create refresh token with longer expiry
+    const refreshToken = jwt.sign(
+      { username: user.username },
+      REFRESH_TOKEN_SECRET,
+      { expiresIn: REFRESH_TOKEN_EXPIRY }
+    );
+    
+    // Store refresh token (could use Redis or similar in production)
+    // The tokenId helps track individual refresh tokens for revocation
+    const tokenId = Date.now().toString();
+    usersData.refreshTokens[tokenId] = {
+      token: refreshToken,
+      username: user.username,
+      createdAt: new Date().toISOString(),
+      expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString() // 7 days
+    };
+    
+    // Save the updated tokens
+    saveUsers();
+    
+    // Set cookies
+    res.cookie('token', accessToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      maxAge: 60 * 60 * 1000, // 1 hour
+      sameSite: 'strict' // Add CSRF protection
+    });
+    
+    res.cookie('refreshToken', tokenId, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      path: '/refresh-token', // Only sent to refresh endpoint
+      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+      sameSite: 'strict'
+    });
+    
+    res.json({
+      message: 'Login successful',
+      user: {
+        username: user.username,
+        role: user.role
+      },
+      token: accessToken, // Include token in response for non-cookie environments
+      expiresIn: 3600 // 1 hour in seconds
+    });
+  } catch (error) {
+    next(error);
+  }
+});
+
+// Logout route
+app.post('/logout', (req, res) => {
+  // Get refresh token ID
+  const refreshTokenId = req.cookies.refreshToken;
+  
+  // Remove refresh token if it exists
+  if (refreshTokenId && usersData.refreshTokens[refreshTokenId]) {
+    delete usersData.refreshTokens[refreshTokenId];
+    saveUsers();
+  }
+  
+  // Clear all cookies
+  res.clearCookie('token');
+  res.clearCookie('refreshToken', { path: '/refresh-token' });
+  
+  res.json({ message: 'Logout successful' });
+});
+
+// Refresh token endpoint
+app.post('/refresh-token', (req, res, next) => {
+  try {
+    // Get refresh token ID from cookie
+    const refreshTokenId = req.cookies.refreshToken;
+    
+    if (!refreshTokenId) {
+      const err = new Error('Refresh token required');
+      err.status = 401;
+      return next(err);
+    }
+    
+    // Check if token exists in our store
+    const storedToken = usersData.refreshTokens[refreshTokenId];
+    if (!storedToken) {
+      const err = new Error('Invalid refresh token');
+      err.status = 401;
+      return next(err);
+    }
+    
+    // Verify the token
+    try {
+      const payload = jwt.verify(storedToken.token, REFRESH_TOKEN_SECRET);
+      
+      // Find the user
+      const user = usersData.users.find(u => u.username === payload.username);
+      
+      if (!user) {
+        const err = new Error('User not found');
+        err.status = 401;
+        return next(err);
+      }
+      
+      // Create new access token
+      const accessToken = jwt.sign(
+        { id: user.id, username: user.username, role: user.role },
+        JWT_SECRET,
+        { expiresIn: ACCESS_TOKEN_EXPIRY }
+      );
+      
+      // Set cookie with new access token
+      res.cookie('token', accessToken, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        maxAge: 60 * 60 * 1000, // 1 hour
+        sameSite: 'strict'
+      });
+      
+      // Return new access token and user info
+      res.json({
+        message: 'Token refreshed successfully',
+        user: {
+          username: user.username,
+          role: user.role
+        },
+        token: accessToken,
+        expiresIn: 3600 // 1 hour in seconds
+      });
+    } catch (error) {
+      // Token verification failed, remove it
+      delete usersData.refreshTokens[refreshTokenId];
+      saveUsers();
+      
+      const err = new Error('Invalid refresh token');
+      err.status = 401;
+      return next(err);
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+
+// Logout from all devices
+app.post('/logout-all', authenticateToken, (req, res) => {
+  const { username } = req.user;
+  
+  // Remove all refresh tokens for this user
+  for (const id in usersData.refreshTokens) {
+    if (usersData.refreshTokens[id].username === username) {
+      delete usersData.refreshTokens[id];
+    }
+  }
+  
+  // Save changes
+  saveUsers();
+  
+  // Clear cookies for current session
+  res.clearCookie('token');
+  res.clearCookie('refreshToken', { path: '/refresh-token' });
+  
+  res.json({ message: 'Logged out from all devices successfully' });
+});
+
+// Get current user
+app.get('/me', authenticateToken, (req, res) => {
+  res.json({
+    username: req.user.username,
+    role: req.user.role
+  });
+});
+
+// Update user profile
+app.put('/me', authenticateToken, async (req, res) => {
+  try {
+    const { username } = req.user;
+    const updatableFields = ['displayName', 'email', 'preferences'];
+    const userIndex = usersData.users.findIndex(u => u.username === username);
+    
+    if (userIndex === -1) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+    
+    const user = usersData.users[userIndex];
+    let updated = false;
+    
+    // Update allowed fields
+    for (const field of updatableFields) {
+      if (req.body[field] !== undefined) {
+        // For preferences, merge rather than replace
+        if (field === 'preferences') {
+          user.preferences = {
+            ...(user.preferences || {}),
+            ...req.body.preferences
+          };
+        } else {
+          user[field] = req.body[field];
+        }
+        updated = true;
+      }
+    }
+    
+    if (!updated) {
+      return res.status(400).json({ error: 'No valid fields to update' });
+    }
+    
+    // Update the user
+    usersData.users[userIndex] = user;
+    
+    if (saveUsers()) {
+      // Return the updated user profile
+      res.json({
+        username: user.username,
+        role: user.role,
+        displayName: user.displayName,
+        email: user.email,
+        preferences: user.preferences
+      });
+    } else {
+      res.status(500).json({ error: 'Failed to save user data' });
+    }
+  } catch (error) {
+    logger.error(`Profile update error: ${error.message}`);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// List users (admin only)
+app.get('/users', authenticateToken, requireAdmin, (req, res) => {
+  const users = usersData.users.map(user => ({
+    username: user.username,
+    role: user.role,
+    createdAt: user.createdAt
+  }));
+  
+  res.json({ users });
+});
+
+// Create user (admin only)
+app.post('/users', authenticateToken, requireAdmin, async (req, res) => {
+  const { username, password, role = 'user' } = req.body;
+  
+  if (!username || !password) {
+    return res.status(400).json({ error: 'Username and password required' });
+  }
+  
+  // Check if user already exists
+  if (usersData.users.some(u => u.username === username)) {
+    return res.status(409).json({ error: 'Username already exists' });
+  }
+  
+  // Hash password
+  const passwordHash = await bcrypt.hash(password, 10);
+  
+  // Create new user
+  const newUser = {
+    username,
+    passwordHash,
+    role,
+    createdAt: new Date().toISOString()
+  };
+  
+  usersData.users.push(newUser);
+  
+  if (saveUsers()) {
+    res.status(201).json({
+      message: 'User created successfully',
+      user: {
+        username: newUser.username,
+        role: newUser.role,
+        createdAt: newUser.createdAt
+      }
+    });
+  } else {
+    res.status(500).json({ error: 'Failed to save user data' });
+  }
+});
+
+// Delete user (admin only)
+app.delete('/users/:username', authenticateToken, requireAdmin, (req, res) => {
+  const { username } = req.params;
+  
+  const initialCount = usersData.users.length;
+  usersData.users = usersData.users.filter(u => u.username !== username);
+  
+  if (usersData.users.length === initialCount) {
+    return res.status(404).json({ error: 'User not found' });
+  }
+  
+  if (saveUsers()) {
+    res.json({ message: 'User deleted successfully' });
+  } else {
+    res.status(500).json({ error: 'Failed to save user data' });
+  }
+});
+
+// Change password
+app.put('/password', authenticateToken, async (req, res, next) => {
+  try {
+    const { currentPassword, newPassword } = req.body;
+    
+    if (!currentPassword || !newPassword) {
+      const err = new Error('Current and new passwords required');
+      err.status = 400;
+      return next(err);
+    }
+    
+    const userIndex = usersData.users.findIndex(u => u.username === req.user.username);
+    
+    if (userIndex === -1) {
+      const err = new Error('User not found');
+      err.status = 404;
+      return next(err);
+    }
+    
+    const user = usersData.users[userIndex];
+    const passwordMatch = await bcrypt.compare(currentPassword, user.passwordHash);
+    
+    if (!passwordMatch) {
+      const err = new Error('Current password is incorrect');
+      err.status = 401;
+      return next(err);
+    }
+    
+    // Hash new password
+    const passwordHash = await bcrypt.hash(newPassword, 10);
+    
+    // Update user
+    usersData.users[userIndex].passwordHash = passwordHash;
+    
+    if (saveUsers()) {
+      res.json({ message: 'Password changed successfully' });
+    } else {
+      const err = new Error('Failed to save user data');
+      err.status = 500;
+      return next(err);
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+
+// Request password reset
+app.post('/forgot-password', async (req, res, next) => {
+  try {
+    const { username, email } = req.body;
+    
+    if (!username && !email) {
+      const err = new Error('Username or email required');
+      err.status = 400;
+      return next(err);
+    }
+    
+    // Find user by username or email
+    const user = usersData.users.find(u => 
+      (username && u.username === username) || 
+      (email && u.email === email)
+    );
+    
+    if (!user) {
+      // Don't reveal user existence - always return success even if user not found
+      // This is for security reasons to prevent username enumeration
+      return res.json({ 
+        message: 'If that account exists, a password reset link has been sent' 
+      });
+    }
+    
+    // Generate unique reset token
+    const resetToken = Math.random().toString(36).substring(2, 15) + 
+                      Math.random().toString(36).substring(2, 15);
+    
+    // Store token with 1-hour expiry
+    usersData.passwordResetTokens[resetToken] = {
+      username: user.username,
+      createdAt: new Date().toISOString(),
+      expiresAt: new Date(Date.now() + 60 * 60 * 1000).toISOString() // 1 hour
+    };
+    
+    saveUsers();
+    
+    // In a real system, we'd send an email here with a link containing the token
+    // For this implementation, we'll just return the token in the response
+    // In production, NEVER return the actual token to the client
+    
+    logger.info(`Generated password reset token for user: ${user.username}`);
+    
+    // For development purposes only - remove in production
+    if (process.env.NODE_ENV !== 'production') {
+      return res.json({
+        message: 'Password reset token generated',
+        resetToken, // Only for development/testing
+        resetLink: `http://localhost:3001/auth/reset-password?token=${resetToken}`
+      });
+    }
+    
+    res.json({ 
+      message: 'If that account exists, a password reset link has been sent to the registered email address' 
+    });
+  } catch (error) {
+    next(error);
+  }
+});
+
+// Reset password using token
+app.post('/reset-password', async (req, res, next) => {
+  try {
+    const { token, newPassword } = req.body;
+    
+    if (!token || !newPassword) {
+      const err = new Error('Token and new password required');
+      err.status = 400;
+      return next(err);
+    }
+    
+    // Check if token exists and is valid
+    const resetData = usersData.passwordResetTokens[token];
+    if (!resetData) {
+      const err = new Error('Invalid or expired token');
+      err.status = 400;
+      return next(err);
+    }
+    
+    // Check if token is expired
+    if (new Date(resetData.expiresAt) < new Date()) {
+      // Remove expired token
+      delete usersData.passwordResetTokens[token];
+      saveUsers();
+      
+      const err = new Error('Token has expired');
+      err.status = 400;
+      return next(err);
+    }
+    
+    // Find user
+    const userIndex = usersData.users.findIndex(u => u.username === resetData.username);
+    if (userIndex === -1) {
+      const err = new Error('User not found');
+      err.status = 404;
+      return next(err);
+    }
+    
+    // Hash new password
+    const passwordHash = await bcrypt.hash(newPassword, 10);
+    
+    // Update user password
+    usersData.users[userIndex].passwordHash = passwordHash;
+    
+    // Remove used token
+    delete usersData.passwordResetTokens[token];
+    
+    // Remove all refresh tokens for this user for security
+    for (const id in usersData.refreshTokens) {
+      if (usersData.refreshTokens[id].username === resetData.username) {
+        delete usersData.refreshTokens[id];
+      }
+    }
+    
+    if (saveUsers()) {
+      res.json({ message: 'Password reset successfully' });
+    } else {
+      const err = new Error('Failed to save user data');
+      err.status = 500;
+      return next(err);
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+
+// Verify token
+app.post('/verify', (req, res) => {
+  const token = req.cookies.token || req.headers['authorization']?.split(' ')[1];
+  
+  if (!token) {
+    return res.status(401).json({ valid: false, error: 'No token provided' });
+  }
+  
+  try {
+    const user = jwt.verify(token, JWT_SECRET);
+    res.json({ valid: true, user: { username: user.username, role: user.role } });
+  } catch (error) {
+    res.json({ valid: false, error: error.message });
+  }
+});
+
+// Options route for CORS preflight
+app.options('*', cors());
+
+// Health check endpoint
+app.get('/health', (req, res) => {
+  res.json({
+    status: 'healthy',
+    uptime: process.uptime()
+  });
+});
+
+// Test endpoint for checking users
+app.get('/debug/users', (req, res) => {
+  // Only in development 
+  if (process.env.NODE_ENV !== 'production') {
+    res.json({
+      users: usersData.users.map(u => ({
+        username: u.username,
+        role: u.role,
+        createdAt: u.createdAt,
+        passwordHashLength: u.passwordHash.length
+      }))
+    });
+  } else {
+    res.status(404).json({ error: 'Not found' });
+  }
+});
+
+// Start server
+app.listen(PORT, () => {
+  logger.info(`MCP Authentication Server running on port ${PORT}`);
+  // Register with base server after a short delay
+  setTimeout(registerWithBaseServer, 3000);
+});
+
+module.exports = app;

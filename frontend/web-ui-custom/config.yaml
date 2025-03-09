@@ -1,0 +1,33 @@
+port: 3000
+logLevel: debug
+logMode: text
+systemPrompt: You are a helpful assistant.
+titleGeneratorPrompt: Generate a title for this chat with only one sentence with maximum 5 words.
+
+llm:
+  provider: ollama
+  model: llama2
+  parameters:
+    temperature: 0.7
+    topP: 0.9
+    maxTokens: 1000
+  host: http://host.docker.internal:11434
+
+mcpServers:
+  base:
+    url: http://mcp-base-server:8090
+  memory:
+    url: http://mcp-memory-server:8092
+  filesystem:
+    url: http://mcp-filesystem-server:8091
+  brave-search:
+    url: http://mcp-brave-search-server:8096
+  ollama:
+    url: http://mcp-ollama-bridge:8082
+  auth:
+    url: http://mcp-auth-server:8097
+
+mcpSSEServers:
+  base:
+    url: http://mcp-base-server:8090
+    maxPayloadSize: 8388608

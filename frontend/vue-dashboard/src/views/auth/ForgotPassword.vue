@@ -22,15 +22,10 @@
       {{ authStore.error }}
     </v-alert>
     
-    <v-alert
-      type="info"
-      variant="tonal"
-      class="mb-4"
-    >
-      The password recovery feature is currently under development. Please contact your administrator to reset your password.
-    </v-alert>
+
     
-    <div v-if="!isSubmitted">
+    <v-fade-transition mode="out-in">
+      <div v-if="!isSubmitted">
       <p class="text-body-1 text-medium-emphasis mb-4">
         Enter your email address and we'll send you instructions to reset your password.
       </p>
@@ -45,20 +40,27 @@
           :disabled="authStore.loading"
         ></v-text-field>
         
-        <v-btn
-          color="primary"
-          block
-          size="large"
-          type="submit"
-          :loading="authStore.loading"
-          class="mt-2"
-        >
-          Send Reset Link
-        </v-btn>
+        <div class="position-relative">
+          <v-btn
+            color="primary"
+            block
+            size="large"
+            type="submit"
+            :loading="authStore.loading"
+            class="mt-2"
+          >
+            <v-fade-transition mode="out-in">
+              <span v-if="authStore.loading">Sending...</span>
+              <span v-else>Send Reset Link</span>
+            </v-fade-transition>
+          </v-btn>
+        </div>
       </v-form>
-    </div>
+        </div>
+    </v-fade-transition>
     
-    <div v-else class="text-center">
+    <v-fade-transition mode="out-in">
+      <div v-if="isSubmitted" class="text-center">
       <v-icon
         color="success"
         size="64"
@@ -70,7 +72,8 @@
       <p class="text-body-1 mb-4">
         If your email address exists in our database, you will receive a password recovery link at your email address shortly.
       </p>
-    </div>
+      </div>
+    </v-fade-transition>
     
     <div class="text-center mt-6">
       <router-link 
@@ -86,6 +89,7 @@
 <script setup>
 import { ref } from 'vue';
 import { useAuthStore } from '../../stores/auth';
+import mcpApi from '../../services/mcp-api';
 
 // Component state
 const email = ref('');
@@ -111,24 +115,14 @@ async function handleSubmit() {
   const isValid = await form.value.validate();
   if (!isValid.valid) return;
   
-  // Since this feature is not yet implemented in the backend,
-  // just simulate a successful submission
-  isSubmitted.value = true;
-  successMessage.value = 'Password reset instructions sent successfully';
+  // Request password reset using auth store
+  const success = await authStore.requestPasswordReset(email.value);
   
-  // In a real implementation, we would call the API:
-  // try {
-  //   // Send password reset request
-  //   const response = await mcpApi.post('auth', '/forgot-password', { 
-  //     email: email.value 
-  //   });
-  //   
-  //   // Set success state
-  //   isSubmitted.value = true;
-  //   successMessage.value = 'Password reset instructions sent successfully';
-  // } catch (error) {
-  //   // Auth store error handling will capture this
-  //   // We'll keep the form visible to allow retries
-  // }
+  if (success) {
+    // Set success state
+    isSubmitted.value = true;
+    successMessage.value = 'Password reset instructions sent successfully';
+  }
+  // If not successful, the auth store will have already set the error message
 }
 </script>

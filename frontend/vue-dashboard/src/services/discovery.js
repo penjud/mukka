@@ -28,10 +28,23 @@ async function checkServiceHealth(serviceKey) {
   const service = serviceStore.services[serviceKey];
   if (!service) return false;
   
+  // For debugging
+  console.log(`Checking health of ${service.name} at ${service.endpoint}${DISCOVERY_ENDPOINT}`);
+  
   try {
     // Add a timestamp to prevent caching
     const timestamp = new Date().getTime();
-    const response = await fetch(`${service.endpoint}${DISCOVERY_ENDPOINT}?ts=${timestamp}`, {
+    let url = `${service.endpoint}${DISCOVERY_ENDPOINT}?ts=${timestamp}`;
+    
+    // For Auth service, check through the proxy 
+    if (serviceKey === 'auth' && window.location.hostname === 'localhost') {
+      // Use the Nginx proxy to access auth service
+      const proxyUrl = new URL(window.location.href);
+      url = `${proxyUrl.protocol}//${proxyUrl.host}/api/auth${DISCOVERY_ENDPOINT}?ts=${timestamp}`;
+      console.log(`Using proxy URL for auth service: ${url}`);
+    }
+    
+    const response = await fetch(url, {
       method: 'GET',
       headers: {
         'Accept': 'application/json',
@@ -41,6 +54,9 @@ async function checkServiceHealth(serviceKey) {
     });
     
     const status = response.status >= 200 && response.status < 300;
+    
+    // For debugging
+    console.log(`Service ${service.name} health check result: ${status}`);
     
     // Update service status
     serviceStore.services[serviceKey].status = status;

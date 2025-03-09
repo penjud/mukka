@@ -54,7 +54,7 @@ export const MCP_SERVICES = {
   // Authentication Server
   auth: {
     name: 'Auth Server',
-    endpoint: 'http://localhost:8097',
+    endpoint: 'http://localhost:8097', // Using localhost from host machine to Docker container
     status: false,
     icon: 'mdi-shield-account',
     description: 'User authentication and management'

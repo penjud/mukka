@@ -1,0 +1,15 @@
+[Unit]
+Description=Mukka Vue Dashboard Container
+After=network.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+WorkingDirectory=/home/mothership/mukka
+ExecStartPre=/bin/sleep 20
+ExecStart=/home/mothership/mukka/start-vue-dashboard.sh
+ExecStop=/usr/bin/docker stop mukka-vue-dashboard
+
+[Install]
+WantedBy=multi-user.target

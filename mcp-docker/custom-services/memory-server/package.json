@@ -1,0 +1,16 @@
+{
+  "name": "mcp-memory-server-custom",
+  "version": "1.0.0",
+  "description": "Custom Memory MCP Server with Agent Management",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/server-memory": "latest",
+    "express": "^4.18.2",
+    "cors": "^2.8.5",
+    "body-parser": "^1.20.2",
+    "uuid": "^9.0.0"
+  }
+}

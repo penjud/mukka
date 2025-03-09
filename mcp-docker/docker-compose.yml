@@ -1,12 +1,14 @@
 version: '3.8'
 
 services:
-  # Memory Service
+  # Custom Memory Service with Agent Management
   mcp-memory:
-    image: node:18-alpine
+    build:
+      context: ./custom-services/memory-server
     volumes:
       - mcp-memory-data:/data
-    command: sh -c "npm install -g @modelcontextprotocol/server-memory && MEMORY_FILE_PATH=/data/memory.json npx @modelcontextprotocol/server-memory"
+    ports:
+      - "8094:8092"
     restart: unless-stopped
 
   # Filesystem Service
@@ -14,6 +16,8 @@ services:
     image: node:18-alpine
     volumes:
       - ./projects:/projects:rw
+    ports:
+      - "8095:8080"
     command: sh -c "npm install -g @modelcontextprotocol/server-filesystem && npx @modelcontextprotocol/server-filesystem /projects"
     restart: unless-stopped
 
@@ -22,16 +26,50 @@ services:
     image: node:18-alpine
     environment:
       - BRAVE_API_KEY=${BRAVE_API_KEY:-}
+    ports:
+      - "8096:8080"
     command: sh -c "npm install -g @modelcontextprotocol/server-brave-search && npx @modelcontextprotocol/server-brave-search"
     restart: unless-stopped
     
-  # We'll use NodeJS http-server instead of building Go app
+  # Auth Service
+  mcp-auth:
+    image: node:18-alpine
+    ports:
+      - "8097:8080"
+    volumes:
+      - mcp-auth-data:/data
+    environment:
+      - PORT=8080
+      - AUTH_FILE_PATH=/data/auth.json
+    command: sh -c "npm install -g @modelcontextprotocol/server-auth && AUTH_FILE_PATH=/data/auth.json npx @modelcontextprotocol/server-auth"
+    restart: unless-stopped
+  
+  # Ollama Bridge
+  mcp-ollama-bridge:
+    image: node:18-alpine
+    ports:
+      - "8082:8080"
+    environment:
+      - OLLAMA_HOST=host.docker.internal
+      - OLLAMA_PORT=11434
+    command: sh -c "npm install -g @modelcontextprotocol/server-ollama-bridge && OLLAMA_HOST=host.docker.internal OLLAMA_PORT=11434 npx @modelcontextprotocol/server-ollama-bridge"
+    restart: unless-stopped
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+  
+  # Web UI
   mcp-web-ui:
     image: node:18-alpine
     ports:
-      - "8080:8080"
+      - "3001:8080"
     environment:
       - PORT=8080
+      - MCP_BASE_URL=http://localhost:8090
+      - MCP_MEMORY_URL=http://localhost:8094
+      - MCP_FILESYSTEM_URL=http://localhost:8095
+      - MCP_BRAVE_SEARCH_URL=http://localhost:8096
+      - MCP_AUTH_URL=http://localhost:8097
+      - MCP_OLLAMA_BRIDGE_URL=http://localhost:8082
       - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY:-}
       - OPENAI_API_KEY=${OPENAI_API_KEY:-}
       - OPENROUTER_API_KEY=${OPENROUTER_API_KEY:-}
@@ -43,6 +81,33 @@ services:
       - mcp-memory
       - mcp-filesystem
       - mcp-brave-search
+      - mcp-auth
+      - mcp-ollama-bridge
+  
+  # Vue Dashboard
+  vue-dashboard:
+    image: node:18-alpine
+    ports:
+      - "3002:8080"
+    volumes:
+      - ./vue-dashboard:/app
+    working_dir: /app
+    command: sh -c "npm install && npm run dev -- --host 0.0.0.0"
+    environment:
+      - HOST=0.0.0.0
+    depends_on:
+      - mcp-memory
+      - mcp-filesystem
+      - mcp-brave-search
+      - mcp-auth
+      - mcp-ollama-bridge
+    networks:
+      - mukka_mukka-network
 
 volumes:
   mcp-memory-data:
+  mcp-auth-data:
+
+networks:
+  mukka_mukka-network:
+    external: true

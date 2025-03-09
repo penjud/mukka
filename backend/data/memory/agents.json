@@ -1,0 +1,56 @@
+{
+  "66fbc437-4ec4-48c3-910b-844c69fa97f4": {
+    "id": "66fbc437-4ec4-48c3-910b-844c69fa97f4",
+    "createdAt": "2025-03-07T23:17:01.309Z",
+    "updatedAt": "2025-03-07T23:17:01.309Z",
+    "name": "Test Agent",
+    "description": "A test agent to verify the API is working",
+    "traits": [
+      "friendly",
+      "helpful"
+    ],
+    "expertise": [
+      "general knowledge"
+    ],
+    "systemPrompt": "You are a helpful AI assistant.",
+    "conversations": [
+      "5a2d7fa1-c789-4fbb-8d16-c56658c426c8",
+      "b2cffe21-cd28-4e07-b79d-1187b5d6baec"
+    ]
+  },
+  "a80555a6-b195-4c22-8eac-2e54c56c3210": {
+    "id": "a80555a6-b195-4c22-8eac-2e54c56c3210",
+    "createdAt": "2025-03-07T23:22:01.227Z",
+    "updatedAt": "2025-03-07T23:22:01.227Z",
+    "name": "Test Script Agent",
+    "description": "An agent created by the test script",
+    "traits": [
+      "friendly",
+      "helpful"
+    ],
+    "expertise": [
+      "testing",
+      "debugging"
+    ],
+    "systemPrompt": "You are a helpful test agent."
+  },
+  "12df0151-ea8a-4f2a-9cc6-88cda9bfa4a0": {
+    "id": null,
+    "createdAt": "2025-03-07T23:30:22.336Z",
+    "updatedAt": "2025-03-07T23:30:22.336Z",
+    "name": "Connie",
+    "description": "Connie is Stevens friend",
+    "avatar": "/avatars/placeholder.jpg",
+    "color": "primary",
+    "traits": [
+      "Friendly",
+      "Creative",
+      "Helpful"
+    ],
+    "expertise": [
+      "Education"
+    ],
+    "model": "llama3",
+    "systemPrompt": "you are an experienced educator that is now an educational consultant"
+  }
+}
