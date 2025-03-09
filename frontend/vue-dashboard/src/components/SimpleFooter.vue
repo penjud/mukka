@@ -3,12 +3,12 @@
     <div class="footer-content">
       <div class="copyright">
         <v-icon small color="info" class="mr-1">mdi-information-outline</v-icon>
-        Mothership Command Platform &copy; {{ new Date().getFullYear() }}
+        MukkaAI &copy; {{ new Date().getFullYear() }}
       </div>
       <div class="links">
-        <a href="#" class="footer-link">Privacy Policy</a>
-        <a href="#" class="footer-link">Terms of Service</a>
-        <a href="#" class="footer-link">Contact</a>
+        <router-link :to="{name: 'PrivacyPolicy'}" class="footer-link">Privacy Policy</router-link>
+        <router-link :to="{name: 'TermsOfService'}" class="footer-link">Terms of Service</router-link>
+        <router-link :to="{name: 'Contact'}" class="footer-link">Contact</router-link>
       </div>
     </div>
   </div>

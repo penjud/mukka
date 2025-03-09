@@ -19,6 +19,11 @@ import PersonalWorkspace from '../views/workspace/PersonalWorkspace.vue'
 import AgentManagement from '../views/agents/AgentManagement.vue'
 import AdminSettings from '../views/settings/AdminSettings.vue'
 
+// Legal pages
+import PrivacyPolicy from '../views/legal/PrivacyPolicy.vue'
+import TermsOfService from '../views/legal/TermsOfService.vue'
+import Contact from '../views/legal/Contact.vue'
+
 const routes = [
   {
     path: '/auth',
@@ -94,6 +99,22 @@ const routes = [
         name: 'AdminSettings',
         component: AdminSettings,
         meta: { requiresAdmin: true }
+      },
+      // Legal routes
+      {
+        path: 'privacy-policy',
+        name: 'PrivacyPolicy',
+        component: PrivacyPolicy
+      },
+      {
+        path: 'terms-of-service',
+        name: 'TermsOfService',
+        component: TermsOfService
+      },
+      {
+        path: 'contact',
+        name: 'Contact',
+        component: Contact
       }
     ]
   },
