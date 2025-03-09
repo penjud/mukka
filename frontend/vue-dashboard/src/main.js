@@ -13,6 +13,7 @@ import * as components from 'vuetify/components';
 import * as directives from 'vuetify/directives';
 import { aliases, mdi } from 'vuetify/iconsets/mdi';
 import '@mdi/font/css/materialdesignicons.css';
+import './assets/styles/theme-previews.css';
 
 // Create Vuetify instance
 const vuetify = createVuetify({
@@ -53,14 +54,14 @@ const vuetify = createVuetify({
       'midnight-nebula': {
         dark: true,
         colors: {
-          primary: '#2D1B54',
-          secondary: '#1A1048',
+          primary: '#7E57C2',
+          secondary: '#5E35B1',
           accent: '#FF00FF',
           tertiary: '#00FFFF',
           error: '#FF5252',
-          info: '#7B52CC',
-          success: '#3A2B69',
-          warning: '#A020F0',
+          info: '#9575CD',
+          success: '#673AB7',
+          warning: '#BA68C8',
           background: '#121212',
           surface: '#1E1E1E',
           'on-background': '#E0E0E0',

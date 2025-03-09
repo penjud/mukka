@@ -1,5 +1,7 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import { useAuthStore } from '../stores/auth'
+import { onMounted } from 'vue'
+import { useRouter as vueUseRouter } from 'vue-router'
 
 // Layout components
 import AppLayout from '../layouts/AppLayout.vue'
@@ -22,6 +24,24 @@ const routes = [
     path: '/auth',
     component: AuthLayout,
     children: [
+      {
+        path: 'logout',
+        name: 'Logout',
+        component: {
+          // Use a simple empty component that just logs out and redirects
+          setup() {
+            const authStore = useAuthStore();
+            const router = vueUseRouter();
+            
+            onMounted(() => {
+              authStore.logout();
+              router.push('/auth/login');
+            });
+            
+            return () => null; // No rendering needed
+          }
+        }
+      },
       {
         path: 'login',
         name: 'Login',

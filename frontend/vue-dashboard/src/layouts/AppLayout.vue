@@ -129,6 +129,21 @@
     <v-footer app class="pa-0">
       <SimpleFooter />
     </v-footer>
+    
+    <!-- Logout Confirmation Dialog -->
+    <v-dialog v-model="logoutDialog" max-width="400">
+      <v-card>
+        <v-card-title class="text-h5">Confirm Logout</v-card-title>
+        <v-card-text>
+          Are you sure you want to log out? Your session will be terminated.
+        </v-card-text>
+        <v-card-actions>
+          <v-spacer></v-spacer>
+          <v-btn color="grey-darken-1" variant="text" @click="cancelLogout">Cancel</v-btn>
+          <v-btn color="error" @click="confirmLogout">Log Out</v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
   </v-app>
 </template>
 
@@ -142,6 +157,7 @@ import SessionWarning from '../components/SessionWarning.vue';
 
 // Component state
 const drawer = ref(false);
+const logoutDialog = ref(false);
 const authStore = useAuthStore();
 const router = useRouter();
 
@@ -157,7 +173,17 @@ onMounted(async () => {
 
 // Logout function
 function logout() {
-  authStore.logout();
-  router.push({ name: 'Login' });
+  logoutDialog.value = true;
+}
+
+// Confirm logout
+function confirmLogout() {
+  router.push({ name: 'Logout' });
+  logoutDialog.value = false;
+}
+
+// Cancel logout
+function cancelLogout() {
+  logoutDialog.value = false;
 }
 </script>

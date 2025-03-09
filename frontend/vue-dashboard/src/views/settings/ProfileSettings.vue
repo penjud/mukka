@@ -44,6 +44,52 @@
               variant="outlined"
             ></v-select>
           </v-col>
+          
+          <!-- Password Form -->
+          <v-col cols="12" md="6">
+            <v-card class="pa-4">
+              <v-card-title class="text-h6">Change Password</v-card-title>
+              
+              <v-text-field
+                v-model="passwordData.current"
+                label="Current Password"
+                type="password"
+                variant="outlined"
+                :rules="[v => !!v || 'Current password is required']"
+                class="mb-4"
+              ></v-text-field>
+              
+              <v-text-field
+                v-model="passwordData.new"
+                label="New Password"
+                type="password"
+                variant="outlined"
+                :rules="passwordRules"
+                class="mb-4"
+              ></v-text-field>
+              
+              <v-text-field
+                v-model="passwordData.confirm"
+                label="Confirm New Password"
+                type="password"
+                variant="outlined"
+                :rules="[
+                  v => !!v || 'Please confirm your password',
+                  v => v === passwordData.new || 'Passwords do not match'
+                ]"
+                class="mb-4"
+              ></v-text-field>
+              
+              <v-btn 
+                color="primary" 
+                @click="changePassword" 
+                :loading="isUpdatingPassword"
+                :disabled="!canChangePassword"
+              >
+                Update Password
+              </v-btn>
+            </v-card>
+          </v-col>
         </v-row>
         
         <div class="d-flex justify-end mt-4">
@@ -74,8 +120,33 @@ export default {
         email: 'user@example.com',
         theme: localStorage.getItem('mcp_theme') || 'system'
       },
+      
+      passwordData: {
+        current: '',
+        new: '',
+        confirm: ''
+      },
+      
+      isUpdatingPassword: false,
       message: '',
-      messageType: 'info'
+      messageType: 'info',
+      
+      // Password validation rules
+      passwordRules: [
+        v => !!v || 'Password is required',
+        v => v.length >= 8 || 'Password must be at least 8 characters',
+        v => /[A-Z]/.test(v) || 'Password must contain at least one uppercase letter',
+        v => /[0-9]/.test(v) || 'Password must contain at least one number'
+      ]
+    }
+  },
+  
+  computed: {
+    canChangePassword() {
+      return this.passwordData.current && 
+             this.passwordData.new && 
+             this.passwordData.confirm &&
+             this.passwordData.new === this.passwordData.confirm;
     }
   },
   
@@ -108,6 +179,39 @@ export default {
       setTimeout(() => {
         this.message = ''
       }, 3000)
+    },
+    
+    async changePassword() {
+      if (!this.canChangePassword) return;
+      
+      this.isUpdatingPassword = true;
+      
+      try {
+        // Simulate API call
+        await new Promise(resolve => setTimeout(resolve, 1200));
+        
+        // Show success message
+        this.message = 'Password updated successfully';
+        this.messageType = 'success';
+        
+        // Reset form
+        this.passwordData = {
+          current: '',
+          new: '',
+          confirm: ''
+        };
+      } catch (error) {
+        // Show error message
+        this.message = 'Failed to update password. Please try again.';
+        this.messageType = 'error';
+      } finally {
+        this.isUpdatingPassword = false;
+        
+        // Clear message after 3 seconds
+        setTimeout(() => {
+          this.message = '';
+        }, 3000);
+      }
     }
   }
 }

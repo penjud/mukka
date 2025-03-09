@@ -1,0 +1,76 @@
+/* Theme Preview Styles */
+
+.theme-preview {
+  cursor: pointer;
+  transition: transform 0.2s, box-shadow 0.2s;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.theme-preview:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 6px 10px rgba(0, 0, 0, 0.1);
+}
+
+/* Light Theme */
+.theme-preview.light {
+  background-color: #FFFFFF;
+  color: #333333;
+  border: 1px solid #EEEEEE;
+}
+.theme-preview.light::before {
+  content: '';
+  display: block;
+  height: 24px;
+  background-color: #3f51b5;
+}
+
+/* Dark Theme */
+.theme-preview.dark {
+  background-color: #121212;
+  color: #FFFFFF;
+}
+.theme-preview.dark::before {
+  content: '';
+  display: block;
+  height: 24px;
+  background-color: #5c6bc0;
+}
+
+/* Midnight Nebula Theme */
+.theme-preview.midnight-nebula {
+  background-color: #1E1E1E;
+  color: #FFFFFF;
+}
+.theme-preview.midnight-nebula::before {
+  content: '';
+  display: block;
+  height: 24px;
+  background-color: #7E57C2;
+}
+
+/* Eco-Tech Theme */
+.theme-preview.eco-tech {
+  background-color: #F5F5F5;
+  color: #263238;
+  border: 1px solid #E0E0E0;
+}
+.theme-preview.eco-tech::before {
+  content: '';
+  display: block;
+  height: 24px;
+  background-color: #2E7D32;
+}
+
+/* Corporate Clarity Theme */
+.theme-preview.corporate-clarity {
+  background-color: #FFFFFF;
+  color: #263238;
+  border: 1px solid #E0E0E0;
+}
+.theme-preview.corporate-clarity::before {
+  content: '';
+  display: block;
+  height: 24px;
+  background-color: #0D47A1;
+}
