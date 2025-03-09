@@ -284,9 +284,15 @@
 
 <script>
 import { defineComponent } from 'vue';
+import { useThemeManager } from '../composables/useTheme';
 
 export default defineComponent({
   name: 'ProfileSettings',
+  
+  setup() {
+    const { setTheme } = useThemeManager();
+    return { themeManager: { setTheme } };
+  },
   
   data() {
     return {
@@ -333,7 +339,10 @@ export default defineComponent({
       themeOptions: [
         { label: 'Light Theme', value: 'light' },
         { label: 'Dark Theme', value: 'dark' },
-        { label: 'Use System Settings', value: 'system' }
+        { label: 'Use System Settings', value: 'system' },
+        { label: 'Midnight Nebula', value: 'midnight-nebula' },
+        { label: 'Eco-Tech', value: 'eco-tech' },
+        { label: 'Corporate Clarity', value: 'corporate-clarity' }
       ]
     };
   },
@@ -469,6 +478,12 @@ export default defineComponent({
       
       // Update user data
       this.userData.theme = this.editData.theme;
+      
+      // Apply theme using the theme manager
+      this.themeManager.setTheme(this.editData.theme);
+      
+      // Store in localStorage for persistence (the theme manager also does this, but for consistency)
+      localStorage.setItem('mcp_theme', this.editData.theme);
       
       // Reset and close dialog
       this.isUpdating = false;
