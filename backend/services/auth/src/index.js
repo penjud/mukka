@@ -30,6 +30,7 @@ const features = require('./config/features');
 const initAuthRoutes = require('./routes/auth-routes');
 const initUserRoutes = require('./routes/user-routes');
 const initPasswordResetRoutes = require('./routes/password-reset-routes');
+const initAgentRoutes = require('./routes/agent-routes');
 
 // Create logger
 const logger = winston.createLogger({
@@ -197,7 +198,7 @@ app.use((req, res, next) => {
   res.setHeader('X-Frame-Options', 'DENY');
   
   // Strict Content Security Policy
-  res.setHeader('Content-Security-Policy', "default-src 'self'");
+  res.setHeader('Content-Security-Policy', "default-src 'none'");
   
   // HTTP Strict Transport Security (when in production)
   if (process.env.NODE_ENV === 'production') {
@@ -257,12 +258,33 @@ const passwordResetRouter = initPasswordResetRoutes({
   logger
 });
 
+const agentRouter = initAgentRoutes({
+  logger,
+  middlewares: {
+    authenticateToken: authRouter.authenticateToken,
+    requireAdmin: authRouter.requireAdmin
+  }
+});
+
+// System configuration data (static for now, can be made dynamic)
+const systemConfig = {
+  systemName: 'MukkaAI',
+  defaultModel: 'llama3',
+  defaultTheme: 'System Default',
+  defaultLanguage: 'English',
+  allowRegistration: true,
+  autoToolTriggering: true,
+  welcomeMessage: 'Welcome to MukkaAI!'
+};
+
 // Register with base MCP server
 const registerWithBaseServer = async () => {
   try {
+    // IMPORTANT: Use service name (mcp-auth-server) not container name (mukka-mcp-auth-server)
+    // for proper DNS resolution in the Docker network
     const response = await axios.post(`${BASE_SERVER_URL}/services/register`, {
       name: 'auth',
-      url: `http://mukka-mcp-auth-server:${PORT}`,
+      url: `http://mcp-auth-server:${PORT}`,
       type: 'auth',
       description: 'MCP Authentication Server'
     });
@@ -327,6 +349,29 @@ app.get('/health/db', (req, res) => {
   }
 });
 
+// System configuration endpoints
+app.get('/config', (req, res) => {
+  res.json(systemConfig);
+});
+
+app.put('/config', authRouter.authenticateToken, authRouter.requireAdmin, (req, res) => {
+  // Update system config
+  Object.assign(systemConfig, req.body);
+  res.json({
+    message: 'Configuration updated successfully',
+    config: systemConfig
+  });
+});
+
+// Simple metrics endpoint
+app.get('/metrics', (req, res) => {
+  res.json({
+    activeUsers: 3,
+    conversations: 145,
+    customAgents: 7
+  });
+});
+
 // Mount routers
 app.use('/', authRouter);
 
@@ -336,8 +381,40 @@ app.get('/me', authRouter.authenticateToken, (req, res, next) => {
   app._router.handle(req, res, next);
 });
 
+// Mount user routes at both /users and /admin/users
 app.use('/users', userRouter);
+
+// Create admin routes by mounting the same router at /admin/users
+app.use('/admin/users', userRouter);
+
+// Mount config routes at /admin/config as well
+app.get('/admin/config', (req, res) => {
+  res.json(systemConfig);
+});
+
+app.put('/admin/config', authRouter.authenticateToken, authRouter.requireAdmin, (req, res) => {
+  // Update system config
+  Object.assign(systemConfig, req.body);
+  res.json({
+    message: 'Configuration updated successfully',
+    config: systemConfig
+  });
+});
+
+// Mount admin metrics endpoint
+app.get('/admin/metrics', (req, res) => {
+  res.json({
+    activeUsers: 3,
+    conversations: 145,
+    customAgents: 7
+  });
+});
+
 app.use('/', passwordResetRouter);
+
+// Mount agent routes
+app.use('/agents', agentRouter);
+app.use('/admin/agents', agentRouter);
 
 // Test endpoint for checking users (development only)
 app.get('/debug/users', (req, res) => {

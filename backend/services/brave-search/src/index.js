@@ -90,6 +90,16 @@ app.get('/', (req, res) => {
   });
 });
 
+// Health endpoint for service discovery
+app.get('/health', (req, res) => {
+  res.json({
+    status: 'healthy',
+    service: 'brave-search',
+    timestamp: new Date().toISOString(),
+    hasApiKey: !!BRAVE_SEARCH_API_KEY
+  });
+});
+
 // Web search endpoint
 app.get('/search', async (req, res) => {
   try {

@@ -43,6 +43,9 @@ app.use(cors());
 app.use(bodyParser.json());
 app.use(bodyParser.text());
 
+// Import Knowledge Domain routes
+const knowledgeRoutes = require('./routes/knowledgeRoutes');
+
 // Set up file watcher
 const setupWatcher = () => {
   const watcher = chokidar.watch(basePaths, {
@@ -185,6 +188,9 @@ app.get('/', (req, res) => {
     basePaths
   });
 });
+
+// Register Knowledge Domain routes
+app.use('/knowledge', knowledgeRoutes);
 
 // Get list of directories
 app.get('/directories', (req, res) => {
