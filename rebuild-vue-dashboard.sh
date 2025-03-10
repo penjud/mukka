@@ -1,23 +1,26 @@
 #!/bin/bash
-set -e
+# Script to rebuild the Vue Dashboard
 
+echo "Rebuilding Vue Dashboard with updated Admin Settings..."
+
+# Navigate to the project directory
+cd /home/mothership/mukka
+
+# Stop the Vue Dashboard container
+echo "Stopping Vue Dashboard container..."
+docker stop mukka-vue-dashboard
+
+# Remove the container
+echo "Removing Vue Dashboard container..."
+docker rm mukka-vue-dashboard
+
+# Rebuild the Vue Dashboard
 echo "Rebuilding Vue Dashboard..."
+docker-compose build vue-dashboard
 
-# Stop and remove the current container
-echo "Stopping current container..."
-docker stop mukka-vue-dashboard || true
-docker rm mukka-vue-dashboard || true
+# Start the Vue Dashboard
+echo "Starting Vue Dashboard..."
+docker-compose up -d vue-dashboard
 
-# Run the new container with volume mount
-echo "Starting new container..."
-docker run -d \
-  --name mukka-vue-dashboard \
-  --network mukka_mukka-network \
-  -v /home/mothership/mukka/frontend/vue-dashboard:/app \
-  -p 3002:8080 \
-  -w /app \
-  -e "HOST=0.0.0.0" \
-  node:18-alpine \
-  sh -c "npm install && npm run dev -- --host 0.0.0.0"
-
-echo "Vue Dashboard rebuilt and restarted."
+echo -e "\nRebuild complete. Vue Dashboard is now updated with new Admin Settings."
+echo "Access the dashboard at http://localhost:3002"
