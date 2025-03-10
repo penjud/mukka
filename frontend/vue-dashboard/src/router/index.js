@@ -17,6 +17,7 @@ import ResetPassword from '../views/auth/ResetPassword.vue'
 import Dashboard from '../views/Dashboard.vue'
 import PersonalWorkspace from '../views/workspace/PersonalWorkspace.vue'
 import AgentManagement from '../views/agents/AgentManagement.vue'
+import AgentCustomization from '../views/agents/AgentCustomization.vue'
 import AdminSettings from '../views/settings/AdminSettings.vue'
 
 // Legal pages
@@ -102,6 +103,11 @@ const routes = [
         path: 'agents',
         name: 'AgentManagement',
         component: AgentManagement
+      },
+      {
+        path: 'agents/customize',
+        name: 'AgentCustomization',
+        component: AgentCustomization
       },
       {
         path: 'profile',

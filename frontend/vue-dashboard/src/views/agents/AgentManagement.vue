@@ -9,9 +9,17 @@
               Agent Management
             </span>
             
-            <v-btn color="primary" prepend-icon="mdi-plus" @click="debugCreateAgent">
-              Create Agent
-            </v-btn>
+            <div>
+              <v-btn color="secondary" class="me-2" prepend-icon="mdi-shape-outline" @click="showTemplatesDialog = true">
+                From Template
+              </v-btn>
+              <v-btn color="success" class="me-2" prepend-icon="mdi-wizard-hat" @click="goToCustomizationWizard">
+                Advanced Wizard
+              </v-btn>
+              <v-btn color="primary" prepend-icon="mdi-plus" @click="editMode = false; showAgentDialog = true">
+                Create Agent
+              </v-btn>
+            </div>
           </v-card-title>
           
           <v-card-subtitle class="text-body-1">
@@ -38,7 +46,7 @@
     
     <!-- Agent Grid -->
     <v-row>
-      <v-col v-for="agent in agents" :key="agent.id" cols="12" sm="6" md="4" lg="3">
+      <v-col v-for="agent in agents" :key="agent._id" cols="12" sm="6" md="4" lg="3">
         <v-card class="agent-card">
           <v-card-item>
             <template v-slot:prepend>
@@ -57,7 +65,7 @@
             
             <v-chip-group>
               <v-chip
-                v-for="(trait, index) in agent.traits.slice(0, 3)"
+                v-for="(trait, index) in getTraitsArray(agent).slice(0, 3)"
                 :key="index"
                 size="small"
                 :color="getTraitColor(trait)"
@@ -65,8 +73,8 @@
               >
                 {{ trait }}
               </v-chip>
-              <v-chip v-if="agent.traits.length > 3" size="small" variant="outlined">
-                +{{ agent.traits.length - 3 }} more
+              <v-chip v-if="getTraitsArray(agent).length > 3" size="small" variant="outlined">
+                +{{ getTraitsArray(agent).length - 3 }} more
               </v-chip>
             </v-chip-group>
           </v-card-text>
@@ -264,6 +272,76 @@
         </v-card-actions>
       </v-card>
     </v-dialog>
+    
+    <!-- Templates Dialog -->
+    <v-dialog v-model="showTemplatesDialog" max-width="800px">
+      <v-card>
+        <v-card-title class="text-h5 font-weight-bold">
+          <v-icon start color="primary" class="me-2">mdi-shape-outline</v-icon>
+          Choose a Template
+        </v-card-title>
+        
+        <v-card-subtitle class="text-body-1">
+          Create a new agent based on a pre-configured template
+        </v-card-subtitle>
+        
+        <v-card-text>
+          <v-row>
+            <v-col v-for="template in templates" :key="template._id" cols="12" sm="6" md="4">
+              <v-card class="h-100" :color="template.templateSettings?.featured ? 'primary' : undefined" :variant="template.templateSettings?.featured ? 'outlined' : 'elevated'" @click="createFromTemplate(template)">
+                <v-card-item>
+                  <template v-slot:prepend>
+                    <v-avatar :color="template.color || 'primary'" size="48">
+                      <img v-if="template.avatar" :src="template.avatar" alt="Template Avatar" />
+                      <v-icon v-else color="white" size="24">mdi-shape-outline</v-icon>
+                    </v-avatar>
+                  </template>
+                  <v-card-title>{{ template.name }}</v-card-title>
+                  <v-card-subtitle>
+                    {{ template.templateSettings?.category || 'General' }}
+                    <v-chip v-if="template.templateSettings?.featured" size="small" color="primary" class="ms-2">Featured</v-chip>
+                  </v-card-subtitle>
+                </v-card-item>
+                
+                <v-card-text>
+                  <p class="text-body-2 text-truncate-2 mb-3">{{ template.description }}</p>
+                  
+                  <v-chip-group>
+                    <v-chip
+                      v-for="(trait, index) in getTraitsArray(template).slice(0, 3)"
+                      :key="index"
+                      size="small"
+                      :color="getTraitColor(trait)"
+                      label
+                    >
+                      {{ trait }}
+                    </v-chip>
+                  </v-chip-group>
+                </v-card-text>
+              </v-card>
+            </v-col>
+            
+            <!-- Empty state -->
+            <v-col v-if="templates.length === 0" cols="12">
+              <v-card class="pa-6 text-center">
+                <v-icon size="64" color="secondary" class="mb-4">mdi-shape-plus</v-icon>
+                <h3 class="text-h5 mb-2">No Templates Available</h3>
+                <p class="text-body-1 mb-6">There are no agent templates available yet.</p>
+              </v-card>
+            </v-col>
+          </v-row>
+        </v-card-text>
+        
+        <v-divider></v-divider>
+        
+        <v-card-actions>
+          <v-spacer></v-spacer>
+          <v-btn color="grey" variant="text" @click="showTemplatesDialog = false">
+            Cancel
+          </v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
   </div>
 </template>
 
@@ -278,13 +356,22 @@ import uuidHelper from '../../services/uuid-helper';
 // Router
 const router = useRouter();
 
+// Navigation
+function goToCustomizationWizard() {
+  debugInfo.value.push('Navigating to customization wizard');
+  router.push('/agents/customize');
+}
+
 // Component state
 const agents = ref([]);
+const templates = ref([]);
 const showAgentDialog = ref(false);
 const showDeleteDialog = ref(false);
 const showCreateAgentDialog = ref(false); // Trigger for create dialog
+const showTemplatesDialog = ref(false); // Dialog for template selection
 const editMode = ref(false);
 const selectedAgent = ref(null);
+const selectedTemplate = ref(null);
 const avatarFile = ref(null);
 const agentFormRef = ref(null);
 const debugInfo = ref([]); // Debug information
@@ -364,19 +451,22 @@ watch(() => showAgentDialog.value, (val) => {
 onMounted(async () => {
   debugInfo.value.push('Component mounted');
   
-  // Check the Memory service status
+  // Check the Auth service status
   try {
-    const statusCheck = await mcpApi.get('memory', '/health');
-    debugInfo.value.push(`Memory health check: ${JSON.stringify(statusCheck)}`);
+    const statusCheck = await mcpApi.get('auth', '/health');
+    debugInfo.value.push(`Auth health check: ${JSON.stringify(statusCheck)}`);
   } catch (error) {
-    debugInfo.value.push(`Error checking Memory health: ${error.message}`);
+    debugInfo.value.push(`Error checking Auth health: ${error.message}`);
   }
   
   // Load models first
   await loadModels();
   
-  // Then load agents
-  await loadAgents();
+  // Then load agents and templates
+  await Promise.all([
+    loadAgents(),
+    loadTemplates()
+  ]);
 });
 
 // Watch for create dialog trigger
@@ -391,13 +481,82 @@ watch(() => showCreateAgentDialog.value, (val) => {
   }
 });
 
+// Load agent templates
+async function loadTemplates() {
+  try {
+    debugInfo.value.push('Loading templates from Auth service...');
+    const response = await mcpApi.get('auth', '/agents/templates');
+    debugInfo.value.push(`Templates response: ${JSON.stringify(response)}`);
+    templates.value = response.templates || [];
+  } catch (error) {
+    debugInfo.value.push(`Error loading templates: ${error.message}`);
+    console.error('Failed to load templates:', error);
+    
+    // Add sample templates if API fails (for development)
+    if (templates.value.length === 0) {
+      templates.value = [
+        {
+          _id: 'template-1',
+          name: 'Technical Assistant',
+          description: 'A template for technical help and code assistance',
+          avatar: null,
+          color: 'blue',
+          personalityTraits: ['Technical', 'Helpful', 'Precise'],
+          knowledgeDomains: [
+            { domain: 'Programming', level: 0.9 },
+            { domain: 'Computer Science', level: 0.8 }
+          ],
+          llmConfig: {
+            model: 'llama3:8b',
+            temperature: 0.5
+          },
+          systemPrompt: 'You are a technical assistant, focused on providing accurate and helpful information about programming and technology.',
+          templateSettings: {
+            isTemplate: true,
+            category: 'Technical',
+            featured: true
+          },
+          accessControl: {
+            isPublic: true
+          }
+        },
+        {
+          _id: 'template-2',
+          name: 'Creative Writer',
+          description: 'A template for creative writing and storytelling',
+          avatar: null,
+          color: 'purple',
+          personalityTraits: ['Creative', 'Enthusiastic', 'Detailed'],
+          knowledgeDomains: [
+            { domain: 'Literature', level: 0.9 },
+            { domain: 'Storytelling', level: 0.9 }
+          ],
+          llmConfig: {
+            model: 'mistral:7b',
+            temperature: 0.8
+          },
+          systemPrompt: 'You are a creative writing assistant, focused on helping with storytelling, character development, and creative expression.',
+          templateSettings: {
+            isTemplate: true,
+            category: 'Creative',
+            featured: true
+          },
+          accessControl: {
+            isPublic: true
+          }
+        }
+      ];
+    }
+  }
+}
+
 // Load all agents from the server
 async function loadAgents() {
   try {
-    debugInfo.value.push('Loading agents from Memory service...');
-    const response = await mcpApi.get('memory', '/api/agents');
+    debugInfo.value.push('Loading agents from Auth service...');
+    const response = await mcpApi.get('auth', '/agents');
     debugInfo.value.push(`Agents response: ${JSON.stringify(response)}`);
-    agents.value = response || [];
+    agents.value = response.profiles || [];
   } catch (error) {
     debugInfo.value.push(`Error loading agents: ${error.message}`);
     console.error('Failed to load agents:', error);
@@ -406,28 +565,56 @@ async function loadAgents() {
     if (agents.value.length === 0) {
       agents.value = [
         {
-          id: 'sample-1',
+          _id: 'sample-1',
           name: 'Research Assistant',
           description: 'Helps you research topics and summarize information',
           avatar: null,
           color: 'blue',
-          traits: ['Analytical', 'Detailed', 'Helpful'],
-          expertise: ['Research', 'Writing', 'Analysis'],
-          model: 'llama3.1:8b',
+          personalityTraits: ['Analytical', 'Detailed', 'Helpful'],
+          knowledgeDomains: [
+            { domain: 'Research', level: 0.8 },
+            { domain: 'Writing', level: 0.7 }
+          ],
+          llmConfig: {
+            model: 'llama3:8b',
+            temperature: 0.7,
+            maxTokens: 1024
+          },
           systemPrompt: 'You are a research assistant, focused on finding accurate information and presenting it clearly.',
+          templateSettings: {
+            isTemplate: false
+          },
+          accessControl: {
+            isPublic: false,
+            allowEditing: true
+          },
           createdAt: new Date().toISOString(),
           updatedAt: new Date().toISOString()
         },
         {
-          id: 'sample-2',
+          _id: 'sample-2',
           name: 'Coding Helper',
           description: 'Assists with programming and technical problems',
           avatar: null,
           color: 'green',
-          traits: ['Technical', 'Precise', 'Patient'],
-          expertise: ['Programming', 'Debugging', 'Software Design'],
-          model: 'mistral:7b',
+          personalityTraits: ['Technical', 'Precise', 'Patient'],
+          knowledgeDomains: [
+            { domain: 'Programming', level: 0.9 },
+            { domain: 'Debugging', level: 0.8 }
+          ],
+          llmConfig: {
+            model: 'mistral:7b',
+            temperature: 0.5,
+            maxTokens: 2048
+          },
           systemPrompt: 'You are a coding assistant, focused on helping with programming tasks and explaining technical concepts clearly.',
+          templateSettings: {
+            isTemplate: false
+          },
+          accessControl: {
+            isPublic: false,
+            allowEditing: true
+          },
           createdAt: new Date().toISOString(),
           updatedAt: new Date().toISOString()
         }
@@ -442,19 +629,19 @@ function debugCreateAgent() {
   showCreateAgentDialog.value = true;
 }
 
-// Debug function for saving agent
+// Save agent function
 async function debugSaveAgent() {
   debugInfo.value.push('Save Agent button clicked');
   debugInfo.value.push(`Form data: ${JSON.stringify(agentFormData)}`);
   
   try {
-    debugInfo.value.push('Checking Memory service status...');
-    const service = serviceStore.services['memory'];
-    debugInfo.value.push(`Memory service status: ${JSON.stringify(service)}`);
+    debugInfo.value.push('Checking Auth service status...');
+    const service = serviceStore.services['auth'];
+    debugInfo.value.push(`Auth service status: ${JSON.stringify(service)}`);
     
     if (!service || !service.status) {
-      debugInfo.value.push('Memory service is not available');
-      throw new Error('Memory service is not available');
+      debugInfo.value.push('Auth service is not available');
+      throw new Error('Auth service is not available');
     }
     
     let response;
@@ -505,59 +692,58 @@ async function debugSaveAgent() {
       }
     }
     
+    // Convert form data to agent profile format
+    const agentProfile = {
+      name: agentFormData.name,
+      description: agentFormData.description,
+      avatar: agentFormData.avatar,
+      personalityTraits: agentFormData.traits.map(trait => trait),
+      personalityIntensity: 0.7,
+      knowledgeDomains: agentFormData.expertise.map(expertise => ({
+        domain: expertise,
+        level: 0.8
+      })),
+      llmConfig: {
+        model: agentFormData.model,
+        temperature: 0.7,
+        maxTokens: 1024
+      },
+      systemPrompt: agentFormData.systemPrompt,
+      toolAccess: {
+        filesystem: true,
+        webSearch: true,
+        memory: true
+      },
+      ragSettings: {
+        enabled: true,
+        retrievalDepth: 3
+      }
+    };
+    
+    // Add color field which is not part of the schema but used by UI
+    agentProfile.color = agentFormData.color;
+    
+    debugInfo.value.push(`Converted agent profile: ${JSON.stringify(agentProfile)}`);
+    
     // Create or update agent
     if (editMode.value) {
       debugInfo.value.push(`Updating agent ${agentFormData.id}...`);
-      const url = `/api/agents/${agentFormData.id}`;
-      debugInfo.value.push(`PUT request to ${service.endpoint}${url}`);
-      response = await mcpApi.put('memory', url, agentFormData);
+      response = await mcpApi.put('auth', `/agents/${agentFormData.id}`, agentProfile);
       debugInfo.value.push(`Update response: ${JSON.stringify(response)}`);
       
       // Update local agent list
-      const index = agents.value.findIndex(a => a.id === agentFormData.id);
-      if (index !== -1) {
-        agents.value[index] = { ...response };
+      const index = agents.value.findIndex(a => a._id === agentFormData.id);
+      if (index !== -1 && response.success) {
+        agents.value[index] = { ...response.profile };
       }
     } else {
       debugInfo.value.push('Creating new agent...');
+      response = await mcpApi.post('auth', '/agents', agentProfile);
+      debugInfo.value.push(`Create response: ${JSON.stringify(response)}`);
       
-      // Use UUID helper for standardized client-side UUID generation
-      const agentPayload = {
-        ...agentFormData,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString()
-      };
-      
-      // Ensure the agent has a valid UUID
-      const agentWithId = uuidHelper.ensureEntityId(agentPayload);
-      debugInfo.value.push(`Generated client-side UUID: ${agentWithId.id}`);
-      
-      
-      debugInfo.value.push(`Enhanced agent payload: ${JSON.stringify(agentWithId)}`);
-      
-      const url = '/api/agents';
-      debugInfo.value.push(`POST request to ${service.endpoint}${url}`);
-      
-      // Make direct fetch call to debug
-      try {
-        const directResponse = await fetch(`${service.endpoint}${url}`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(agentWithId)
-        });
-        
-        const directResponseData = await directResponse.json();
-        debugInfo.value.push(`Direct fetch response: ${JSON.stringify(directResponseData)}`);
-        
-        // Reconcile client and server IDs to ensure consistency
-        response = uuidHelper.reconcileEntityIds(agentWithId, directResponseData);
-        debugInfo.value.push(`Using reconciled agent data: ${JSON.stringify(response)}`);
-        
-        // Add to local agent list
-        agents.value.push(response);
-      } catch (directError) {
-        debugInfo.value.push(`Direct fetch error: ${directError.message}`);
-        throw directError;
+      // Add to local agent list if successful
+      if (response.success) {
+        agents.value.push(response.profile);
       }
     }
     
@@ -571,7 +757,7 @@ async function debugSaveAgent() {
 
 // Start a chat with a specific agent
 function startChat(agent) {
-  debugInfo.value.push(`Starting chat with agent ${agent.id}`);
+  debugInfo.value.push(`Starting chat with agent ${agent._id}`);
   // Create a new conversation with this agent
   createConversationWithAgent(agent);
 }
@@ -579,7 +765,7 @@ function startChat(agent) {
 // Create a new conversation with an agent
 async function createConversationWithAgent(agent) {
   try {
-    debugInfo.value.push(`Creating conversation with agent ${agent.id}...`);
+    debugInfo.value.push(`Creating conversation with agent ${agent._id}...`);
     
     // Generate a client-side ID for the conversation using our helper
     const conversationId = uuidHelper.generateUuid();
@@ -589,10 +775,12 @@ async function createConversationWithAgent(agent) {
     const conversationPayload = {
       id: conversationId,
       title: `Chat with ${agent.name}`,
-      agentId: agent.id,
+      agentId: agent._id,
       metadata: {
-        agentId: agent.id,
-        agentName: agent.name
+        agentId: agent._id,
+        agentName: agent.name,
+        agentModel: agent.llmConfig?.model || 'llama3',
+        systemPrompt: agent.systemPrompt
       },
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
@@ -628,45 +816,103 @@ async function createConversationWithAgent(agent) {
 
 // Edit an existing agent
 function editAgent(agent) {
-  debugInfo.value.push(`Editing agent ${agent.id}`);
+  debugInfo.value.push(`Editing agent ${agent._id}`);
   // Set edit mode
   editMode.value = true;
   selectedAgent.value = agent;
   
   // Populate form with agent data
-  agentFormData.id = agent.id;
+  agentFormData.id = agent._id;
   agentFormData.name = agent.name;
   agentFormData.description = agent.description;
   agentFormData.avatar = agent.avatar;
   agentFormData.color = agent.color || 'primary';
-  agentFormData.traits = [...agent.traits];
-  agentFormData.expertise = [...agent.expertise];
-  agentFormData.model = agent.model;
-  agentFormData.systemPrompt = agent.systemPrompt;
+  
+  // Map personality traits array to traits form field
+  if (agent.personalityTraits && Array.isArray(agent.personalityTraits)) {
+    agentFormData.traits = agent.personalityTraits.map(t => typeof t === 'object' ? t.name : t);
+  } else {
+    agentFormData.traits = [];
+  }
+  
+  // Map knowledge domains to expertise form field
+  if (agent.knowledgeDomains && Array.isArray(agent.knowledgeDomains)) {
+    agentFormData.expertise = agent.knowledgeDomains.map(d => {
+      return typeof d === 'object' ? (d.domain.name || d.domain) : d;
+    });
+  } else {
+    agentFormData.expertise = [];
+  }
+  
+  // Set model and system prompt
+  agentFormData.model = agent.llmConfig?.model || 'llama3';
+  agentFormData.systemPrompt = agent.systemPrompt || 'You are a helpful AI assistant.';
   
   // Show dialog
   showAgentDialog.value = true;
 }
 
+// Create an agent from a template
+async function createFromTemplate(template) {
+  debugInfo.value.push(`Creating agent from template ${template._id}`);
+  try {
+    const customizations = {
+      name: `My ${template.name}`,
+      description: template.description
+    };
+    
+    // Call the API to create from template
+    const response = await mcpApi.post('auth', '/agents/from-template', {
+      templateId: template._id,
+      customizations: customizations
+    });
+    
+    debugInfo.value.push(`Template creation response: ${JSON.stringify(response)}`);
+    
+    // If successful, add to local list
+    if (response.success) {
+      agents.value.push(response.profile);
+      debugInfo.value.push('Agent created from template successfully');
+    } else {
+      debugInfo.value.push(`Failed to create from template: ${response.errors.join(', ')}`);
+    }
+  } catch (error) {
+    debugInfo.value.push(`Error creating from template: ${error.message}`);
+    console.error('Failed to create from template:', error);
+  }
+}
+
 // Clone an existing agent
 function cloneAgent(agent) {
-  debugInfo.value.push(`Cloning agent ${agent.id}`);
-  // Create a copy of the agent
-  const clonedAgent = { ...agent };
-  delete clonedAgent.id;
-  clonedAgent.name = `${agent.name} (Copy)`;
+  debugInfo.value.push(`Cloning agent ${agent._id}`);
   
-  // Set form data
+  // Set form data for a new agent based on the existing one
   editMode.value = false;
   agentFormData.id = null;
-  agentFormData.name = clonedAgent.name;
-  agentFormData.description = clonedAgent.description;
-  agentFormData.avatar = clonedAgent.avatar;
-  agentFormData.color = clonedAgent.color || 'primary';
-  agentFormData.traits = [...clonedAgent.traits];
-  agentFormData.expertise = [...clonedAgent.expertise];
-  agentFormData.model = clonedAgent.model;
-  agentFormData.systemPrompt = clonedAgent.systemPrompt;
+  agentFormData.name = `${agent.name} (Copy)`;
+  agentFormData.description = agent.description;
+  agentFormData.avatar = agent.avatar;
+  agentFormData.color = agent.color || 'primary';
+  
+  // Map personality traits
+  if (agent.personalityTraits && Array.isArray(agent.personalityTraits)) {
+    agentFormData.traits = agent.personalityTraits.map(t => typeof t === 'object' ? t.name : t);
+  } else {
+    agentFormData.traits = [];
+  }
+  
+  // Map knowledge domains
+  if (agent.knowledgeDomains && Array.isArray(agent.knowledgeDomains)) {
+    agentFormData.expertise = agent.knowledgeDomains.map(d => {
+      return typeof d === 'object' ? (d.domain.name || d.domain) : d;
+    });
+  } else {
+    agentFormData.expertise = [];
+  }
+  
+  // Set model and system prompt
+  agentFormData.model = agent.llmConfig?.model || 'llama3';
+  agentFormData.systemPrompt = agent.systemPrompt || 'You are a helpful AI assistant.';
   
   // Show dialog
   showAgentDialog.value = true;
@@ -674,9 +920,23 @@ function cloneAgent(agent) {
 
 // Export agent configuration
 function exportAgent(agent) {
-  debugInfo.value.push(`Exporting agent ${agent.id}`);
-  // Create JSON export
-  const exportData = JSON.stringify(agent, null, 2);
+  debugInfo.value.push(`Exporting agent ${agent._id}`);
+  // Create JSON export - clean up MongoDB specific fields
+  const exportData = JSON.stringify({
+    name: agent.name,
+    description: agent.description,
+    avatar: agent.avatar,
+    personalityTraits: agent.personalityTraits,
+    personalityIntensity: agent.personalityIntensity,
+    knowledgeDomains: agent.knowledgeDomains,
+    llmConfig: agent.llmConfig,
+    systemPrompt: agent.systemPrompt,
+    toolAccess: agent.toolAccess,
+    ragSettings: agent.ragSettings,
+    templateSettings: {
+      isTemplate: false
+    }
+  }, null, 2);
   
   // Create a download link
   const blob = new Blob([exportData], { type: 'application/json' });
@@ -692,7 +952,7 @@ function exportAgent(agent) {
 
 // Delete an agent
 function deleteAgent(agent) {
-  debugInfo.value.push(`Delete button clicked for agent ${agent.id}`);
+  debugInfo.value.push(`Delete button clicked for agent ${agent._id}`);
   selectedAgent.value = agent;
   showDeleteDialog.value = true;
 }
@@ -702,20 +962,42 @@ async function confirmDelete() {
   if (!selectedAgent.value) return;
   
   try {
-    debugInfo.value.push(`Confirming deletion of agent ${selectedAgent.value.id}...`);
-    await mcpApi.delete('memory', `/api/agents/${selectedAgent.value.id}`);
-    debugInfo.value.push('Agent deleted successfully');
+    debugInfo.value.push(`Confirming deletion of agent ${selectedAgent.value._id}...`);
+    const response = await mcpApi.delete('auth', `/agents/${selectedAgent.value._id}`);
+    debugInfo.value.push(`Delete response: ${JSON.stringify(response)}`);
     
-    // Remove from local list
-    agents.value = agents.value.filter(a => a.id !== selectedAgent.value.id);
-    
-    // Close dialog
-    showDeleteDialog.value = false;
-    selectedAgent.value = null;
+    if (response.success) {
+      debugInfo.value.push('Agent deleted successfully');
+      
+      // Remove from local list
+      agents.value = agents.value.filter(a => a._id !== selectedAgent.value._id);
+      
+      // Close dialog
+      showDeleteDialog.value = false;
+      selectedAgent.value = null;
+    } else {
+      debugInfo.value.push(`Failed to delete agent: ${response.errors.join(', ')}`);
+    }
   } catch (error) {
     debugInfo.value.push(`Error deleting agent: ${error.message}`);
     console.error('Failed to delete agent:', error);
   }
+}
+
+// Helper function to get traits array from agent (handles both old and new formats)
+function getTraitsArray(agent) {
+  // Handle new format with personalityTraits field
+  if (agent.personalityTraits && Array.isArray(agent.personalityTraits)) {
+    return agent.personalityTraits.map(t => typeof t === 'object' ? t.name : t);
+  }
+  
+  // Handle old format with traits field
+  if (agent.traits && Array.isArray(agent.traits)) {
+    return agent.traits;
+  }
+  
+  // Default to empty array
+  return [];
 }
 
 // Reset form to default values
