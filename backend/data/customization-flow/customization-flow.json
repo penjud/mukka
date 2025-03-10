@@ -1,0 +1,259 @@
+{
+  "title": "Agent Customization Wizard",
+  "description": "Create your own custom agent by following these steps",
+  "steps": [
+    {
+      "id": "basic-information",
+      "title": "Basic Information",
+      "description": "Provide basic details about your agent",
+      "fields": [
+        {
+          "name": "name",
+          "label": "Agent Name",
+          "type": "text",
+          "required": true,
+          "maxLength": 50,
+          "helpText": "Choose a distinctive name for your agent"
+        },
+        {
+          "name": "description",
+          "label": "Description",
+          "type": "textarea",
+          "required": true,
+          "maxLength": 500,
+          "helpText": "Describe what your agent does and what it's best at"
+        },
+        {
+          "name": "avatar",
+          "label": "Avatar",
+          "type": "image-upload",
+          "required": false,
+          "helpText": "Upload an avatar image (optional)"
+        }
+      ]
+    },
+    {
+      "id": "personality",
+      "title": "Personality",
+      "description": "Define your agent's personality traits",
+      "fields": [
+        {
+          "name": "personalityTraits",
+          "label": "Personality Traits",
+          "type": "trait-selector",
+          "required": true,
+          "multiple": true,
+          "minItems": 1,
+          "maxItems": 4,
+          "helpText": "Select up to 4 personality traits. Be careful not to choose contradictory traits."
+        },
+        {
+          "name": "personalityIntensity",
+          "label": "Personality Intensity",
+          "type": "slider",
+          "required": true,
+          "min": 1,
+          "max": 10,
+          "default": 5,
+          "step": 1,
+          "helpText": "How strongly should the personality traits be expressed?"
+        }
+      ]
+    },
+    {
+      "id": "knowledge",
+      "title": "Knowledge Domains",
+      "description": "Select the areas of knowledge for your agent",
+      "fields": [
+        {
+          "name": "knowledgeDomains",
+          "label": "Knowledge Domains",
+          "type": "domain-selector",
+          "required": true,
+          "multiple": true,
+          "minItems": 1,
+          "maxItems": 5,
+          "helpText": "Select up to 5 knowledge domains"
+        }
+      ]
+    },
+    {
+      "id": "llm-config",
+      "title": "LLM Configuration",
+      "description": "Configure the language model settings",
+      "fields": [
+        {
+          "name": "llmConfig.model",
+          "label": "Model",
+          "type": "select",
+          "required": true,
+          "options": [
+            {"label": "Llama 3 (70B)", "value": "llama3"},
+            {"label": "Llama 3 (8B)", "value": "llama3-8b"},
+            {"label": "Mistral AI", "value": "mistral"},
+            {"label": "GPT-4o", "value": "gpt4o"},
+            {"label": "Claude Opus", "value": "claude-3-opus"}
+          ],
+          "default": "llama3",
+          "helpText": "Select the base language model"
+        },
+        {
+          "name": "llmConfig.temperature",
+          "label": "Temperature",
+          "type": "slider",
+          "required": true,
+          "min": 0.1,
+          "max": 2.0,
+          "default": 0.7,
+          "step": 0.1,
+          "helpText": "Controls randomness: Lower for more deterministic, higher for more creative"
+        },
+        {
+          "name": "llmConfig.topP",
+          "label": "Top-P",
+          "type": "slider",
+          "required": true,
+          "min": 0.1,
+          "max": 1.0,
+          "default": 0.9,
+          "step": 0.1,
+          "helpText": "Controls diversity of responses by limiting token selection"
+        },
+        {
+          "name": "llmConfig.maxTokens",
+          "label": "Max Tokens",
+          "type": "number",
+          "required": true,
+          "min": 1000,
+          "max": 32000,
+          "default": 4000,
+          "helpText": "Maximum length of response"
+        },
+        {
+          "name": "llmConfig.contextWindowSize",
+          "label": "Context Window",
+          "type": "select",
+          "required": true,
+          "options": [
+            {"label": "4K tokens", "value": 4096},
+            {"label": "8K tokens", "value": 8192},
+            {"label": "16K tokens", "value": 16384},
+            {"label": "32K tokens", "value": 32768},
+            {"label": "64K tokens", "value": 65536}
+          ],
+          "default": 8192,
+          "helpText": "Amount of previous conversation the agent can remember"
+        }
+      ]
+    },
+    {
+      "id": "system-prompt",
+      "title": "System Prompt",
+      "description": "Define the base instructions for your agent",
+      "fields": [
+        {
+          "name": "systemPrompt",
+          "label": "System Prompt",
+          "type": "code-editor",
+          "language": "markdown",
+          "required": true,
+          "minLength": 100,
+          "maxLength": 8000,
+          "helpText": "Provide detailed instructions that define how your agent should behave and what knowledge it should apply"
+        }
+      ]
+    },
+    {
+      "id": "tool-access",
+      "title": "Tool Access",
+      "description": "Configure which tools your agent can use",
+      "fields": [
+        {
+          "name": "toolAccess.memory",
+          "label": "Memory Access",
+          "type": "toggle-config",
+          "subFields": [
+            {
+              "name": "enabled",
+              "label": "Enable Memory",
+              "type": "checkbox",
+              "default": true
+            },
+            {
+              "name": "readAccess",
+              "label": "Read Access",
+              "type": "checkbox",
+              "default": true
+            },
+            {
+              "name": "writeAccess",
+              "label": "Write Access",
+              "type": "checkbox",
+              "default": true
+            }
+          ]
+        },
+        {
+          "name": "toolAccess.filesystem",
+          "label": "Filesystem Access",
+          "type": "toggle-config",
+          "subFields": [
+            {
+              "name": "enabled",
+              "label": "Enable Filesystem Access",
+              "type": "checkbox",
+              "default": true
+            },
+            {
+              "name": "readOnly",
+              "label": "Read Only",
+              "type": "checkbox",
+              "default": true
+            },
+            {
+              "name": "paths",
+              "label": "Allowed Paths",
+              "type": "path-selector",
+              "multiple": true,
+              "default": ["/mukka_vault/"]
+            }
+          ]
+        },
+        {
+          "name": "toolAccess.braveSearch",
+          "label": "Web Search",
+          "type": "toggle-config",
+          "subFields": [
+            {
+              "name": "enabled",
+              "label": "Enable Web Search",
+              "type": "checkbox",
+              "default": false
+            },
+            {
+              "name": "maxResults",
+              "label": "Maximum Results",
+              "type": "number",
+              "min": 1,
+              "max": 20,
+              "default": 5
+            }
+          ]
+        },
+        {
+          "name": "toolAccess.codeExecution",
+          "label": "Code Execution",
+          "type": "toggle-config",
+          "subFields": [
+            {
+              "name": "enabled",
+              "label": "Enable Code Execution",
+              "type": "checkbox",
+              "default": false
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

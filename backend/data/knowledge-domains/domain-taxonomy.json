@@ -1,0 +1,141 @@
+{
+  "taxonomyVersion": "1.0.0",
+  "lastUpdated": "2025-03-10",
+  "domains": [
+    {
+      "id": "legal",
+      "name": "Legal",
+      "description": "Legal knowledge including laws, regulations, and legal procedures",
+      "vaultPath": "/mukka_vault/05-Domains/Legal",
+      "subdomains": [
+        {
+          "id": "legal-contracts",
+          "name": "Contracts",
+          "description": "Contract law, agreement templates, and contractual procedures",
+          "vaultPath": "/mukka_vault/05-Domains/Legal/Contracts"
+        },
+        {
+          "id": "legal-intellectual-property",
+          "name": "Intellectual Property",
+          "description": "Patents, trademarks, copyright, and IP protection",
+          "vaultPath": "/mukka_vault/05-Domains/Legal/IntellectualProperty"
+        },
+        {
+          "id": "legal-compliance",
+          "name": "Compliance",
+          "description": "Regulatory compliance and legal requirements",
+          "vaultPath": "/mukka_vault/05-Domains/Legal/Compliance"
+        }
+      ],
+      "keyTerms": ["law", "regulation", "compliance", "legal", "contract", "license", "copyright"]
+    },
+    {
+      "id": "medical",
+      "name": "Medical",
+      "description": "Medical knowledge including healthcare, treatment, and medical science",
+      "vaultPath": "/mukka_vault/05-Domains/Medical",
+      "subdomains": [
+        {
+          "id": "medical-general",
+          "name": "General Medicine",
+          "description": "Basic medical concepts and general healthcare advice",
+          "vaultPath": "/mukka_vault/05-Domains/Medical/General"
+        },
+        {
+          "id": "medical-conditions",
+          "name": "Medical Conditions",
+          "description": "Information about diseases, disorders, and medical conditions",
+          "vaultPath": "/mukka_vault/05-Domains/Medical/Conditions"
+        },
+        {
+          "id": "medical-wellness",
+          "name": "Health & Wellness",
+          "description": "Preventative care, nutrition, and lifestyle health",
+          "vaultPath": "/mukka_vault/05-Domains/Medical/Wellness"
+        }
+      ],
+      "keyTerms": ["health", "medical", "treatment", "symptom", "diagnosis", "wellness", "healthcare"]
+    },
+    {
+      "id": "technical",
+      "name": "Technical",
+      "description": "Technical knowledge including software development, IT, and engineering",
+      "vaultPath": "/mukka_vault/05-Domains/Technical",
+      "subdomains": [
+        {
+          "id": "technical-programming",
+          "name": "Programming",
+          "description": "Programming languages, software development, and coding practices",
+          "vaultPath": "/mukka_vault/05-Domains/Technical/Programming"
+        },
+        {
+          "id": "technical-infrastructure",
+          "name": "Infrastructure",
+          "description": "Cloud services, networking, and IT infrastructure",
+          "vaultPath": "/mukka_vault/05-Domains/Technical/Infrastructure"
+        },
+        {
+          "id": "technical-data-science",
+          "name": "Data Science",
+          "description": "Data analysis, machine learning, and data engineering",
+          "vaultPath": "/mukka_vault/05-Domains/Technical/DataScience"
+        }
+      ],
+      "keyTerms": ["code", "programming", "software", "development", "technology", "cloud", "data"]
+    },
+    {
+      "id": "business",
+      "name": "Business",
+      "description": "Business knowledge including management, strategy, and operations",
+      "vaultPath": "/mukka_vault/05-Domains/Business",
+      "subdomains": [
+        {
+          "id": "business-management",
+          "name": "Management",
+          "description": "Leadership, team management, and organizational behavior",
+          "vaultPath": "/mukka_vault/05-Domains/Business/Management"
+        },
+        {
+          "id": "business-finance",
+          "name": "Finance",
+          "description": "Financial analysis, accounting, and investment",
+          "vaultPath": "/mukka_vault/05-Domains/Business/Finance"
+        },
+        {
+          "id": "business-marketing",
+          "name": "Marketing",
+          "description": "Brand development, advertising, and customer acquisition",
+          "vaultPath": "/mukka_vault/05-Domains/Business/Marketing"
+        }
+      ],
+      "keyTerms": ["business", "management", "strategy", "finance", "marketing", "operations", "leadership"]
+    },
+    {
+      "id": "education",
+      "name": "Education",
+      "description": "Educational knowledge including teaching methods, curriculum, and learning",
+      "vaultPath": "/mukka_vault/05-Domains/Education",
+      "subdomains": [
+        {
+          "id": "education-teaching",
+          "name": "Teaching",
+          "description": "Pedagogical methods, classroom management, and instructional design",
+          "vaultPath": "/mukka_vault/05-Domains/Education/Teaching"
+        },
+        {
+          "id": "education-learning",
+          "name": "Learning",
+          "description": "Learning styles, studying techniques, and educational psychology",
+          "vaultPath": "/mukka_vault/05-Domains/Education/Learning"
+        },
+        {
+          "id": "education-resources",
+          "name": "Educational Resources",
+          "description": "Curricula, lesson plans, and educational tools",
+          "vaultPath": "/mukka_vault/05-Domains/Education/Resources"
+        }
+      ],
+      "keyTerms": ["education", "teaching", "learning", "curriculum", "pedagogy", "instruction", "school"]
+    }
+  ]
+}

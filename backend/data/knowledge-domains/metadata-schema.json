@@ -1,0 +1,98 @@
+{
+  "schemaVersion": "1.0.0",
+  "lastUpdated": "2025-03-10",
+  "schema": {
+    "title": {
+      "type": "string",
+      "description": "The title of the resource",
+      "required": true
+    },
+    "description": {
+      "type": "string",
+      "description": "A brief description of the resource",
+      "required": true
+    },
+    "domainId": {
+      "type": "string",
+      "description": "The ID of the domain this resource belongs to",
+      "required": true
+    },
+    "subdomainId": {
+      "type": "string",
+      "description": "The ID of the subdomain this resource belongs to",
+      "required": false
+    },
+    "tags": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Tags for categorizing the resource",
+      "required": false
+    },
+    "keyTerms": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Key terms associated with this resource",
+      "required": false
+    },
+    "sourceType": {
+      "type": "string",
+      "enum": ["article", "reference", "guide", "document", "code", "example", "definition"],
+      "description": "The type of source this resource represents",
+      "required": true
+    },
+    "sourceQuality": {
+      "type": "number",
+      "minimum": 1,
+      "maximum": 5,
+      "description": "Source quality rating from 1 (low) to 5 (high)",
+      "required": true
+    },
+    "created": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When the resource was created",
+      "required": true
+    },
+    "modified": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When the resource was last modified",
+      "required": true
+    },
+    "authors": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Authors of the resource",
+      "required": false
+    },
+    "sourceUrl": {
+      "type": "string",
+      "description": "URL of the source if applicable",
+      "required": false
+    },
+    "citationTemplate": {
+      "type": "string",
+      "description": "Template for citing this resource",
+      "required": false
+    },
+    "confidenceScore": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1,
+      "description": "Confidence score for retrieval relevance",
+      "required": false
+    },
+    "retrievalStrategy": {
+      "type": "string",
+      "enum": ["semantic", "keyword", "hybrid", "exact"],
+      "description": "Preferred retrieval strategy for this resource",
+      "required": false
+    }
+  }
+}

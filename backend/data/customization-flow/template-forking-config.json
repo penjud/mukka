@@ -1,0 +1,212 @@
+{
+  "title": "Fork Template",
+  "description": "Create your own agent based on this template",
+  "sections": [
+    {
+      "id": "basic-info",
+      "title": "Basic Information",
+      "description": "Customize the basic details for your new agent",
+      "fields": [
+        {
+          "name": "name",
+          "label": "Agent Name",
+          "type": "text",
+          "required": true,
+          "maxLength": 50,
+          "helpText": "Choose a distinctive name for your agent"
+        },
+        {
+          "name": "description",
+          "label": "Description",
+          "type": "textarea",
+          "required": true,
+          "maxLength": 500,
+          "helpText": "Describe what your agent does and what it's best at"
+        },
+        {
+          "name": "avatar",
+          "label": "Avatar",
+          "type": "image-upload",
+          "required": false,
+          "helpText": "Upload an avatar image (optional) or keep the template's avatar"
+        }
+      ]
+    },
+    {
+      "id": "customization-options",
+      "title": "Customization Options",
+      "description": "Choose what you want to customize",
+      "fields": [
+        {
+          "name": "customizePersonality",
+          "label": "Customize Personality",
+          "type": "checkbox",
+          "default": false,
+          "helpText": "Modify the personality traits and intensity"
+        },
+        {
+          "name": "customizeKnowledge",
+          "label": "Customize Knowledge Domains",
+          "type": "checkbox",
+          "default": false,
+          "helpText": "Change the knowledge domains"
+        },
+        {
+          "name": "customizeSystemPrompt",
+          "label": "Customize System Prompt",
+          "type": "checkbox",
+          "default": false,
+          "helpText": "Edit the system prompt"
+        },
+        {
+          "name": "customizeLLMConfig",
+          "label": "Customize LLM Settings",
+          "type": "checkbox",
+          "default": false,
+          "helpText": "Modify the language model settings"
+        },
+        {
+          "name": "customizeToolAccess",
+          "label": "Customize Tool Access",
+          "type": "checkbox",
+          "default": false,
+          "helpText": "Change which tools the agent can access"
+        }
+      ]
+    },
+    {
+      "id": "personality",
+      "title": "Personality",
+      "description": "Modify the agent's personality",
+      "conditional": "customizePersonality",
+      "fields": [
+        {
+          "name": "personalityTraits",
+          "label": "Personality Traits",
+          "type": "trait-selector",
+          "required": true,
+          "multiple": true,
+          "minItems": 1,
+          "maxItems": 4,
+          "helpText": "Select up to 4 personality traits"
+        },
+        {
+          "name": "personalityIntensity",
+          "label": "Personality Intensity",
+          "type": "slider",
+          "required": true,
+          "min": 1,
+          "max": 10,
+          "step": 1,
+          "helpText": "How strongly should the personality traits be expressed?"
+        }
+      ]
+    },
+    {
+      "id": "knowledge",
+      "title": "Knowledge Domains",
+      "description": "Modify the agent's knowledge domains",
+      "conditional": "customizeKnowledge",
+      "fields": [
+        {
+          "name": "knowledgeDomains",
+          "label": "Knowledge Domains",
+          "type": "domain-selector",
+          "required": true,
+          "multiple": true,
+          "minItems": 1,
+          "maxItems": 5,
+          "helpText": "Select up to 5 knowledge domains"
+        }
+      ]
+    },
+    {
+      "id": "system-prompt",
+      "title": "System Prompt",
+      "description": "Modify the agent's system prompt",
+      "conditional": "customizeSystemPrompt",
+      "fields": [
+        {
+          "name": "systemPrompt",
+          "label": "System Prompt",
+          "type": "code-editor",
+          "language": "markdown",
+          "required": true,
+          "minLength": 100,
+          "helpText": "Edit the system prompt to change how your agent behaves"
+        }
+      ]
+    },
+    {
+      "id": "llm-config",
+      "title": "LLM Configuration",
+      "description": "Modify the language model settings",
+      "conditional": "customizeLLMConfig",
+      "fields": [
+        {
+          "name": "llmConfig.model",
+          "label": "Model",
+          "type": "select",
+          "required": true,
+          "options": [
+            {"label": "Llama 3 (70B)", "value": "llama3"},
+            {"label": "Llama 3 (8B)", "value": "llama3-8b"},
+            {"label": "Mistral AI", "value": "mistral"},
+            {"label": "GPT-4o", "value": "gpt4o"},
+            {"label": "Claude Opus", "value": "claude-3-opus"}
+          ],
+          "helpText": "Select the base language model"
+        },
+        {
+          "name": "llmConfig.temperature",
+          "label": "Temperature",
+          "type": "slider",
+          "required": true,
+          "min": 0.1,
+          "max": 2.0,
+          "step": 0.1,
+          "helpText": "Controls randomness: Lower for more deterministic, higher for more creative"
+        },
+        {
+          "name": "llmConfig.topP",
+          "label": "Top-P",
+          "type": "slider",
+          "required": true,
+          "min": 0.1,
+          "max": 1.0,
+          "step": 0.1,
+          "helpText": "Controls diversity of responses"
+        },
+        {
+          "name": "llmConfig.maxTokens",
+          "label": "Max Tokens",
+          "type": "number",
+          "required": true,
+          "min": 1000,
+          "max": 32000,
+          "helpText": "Maximum length of response"
+        }
+      ]
+    },
+    {
+      "id": "tool-access",
+      "title": "Tool Access",
+      "description": "Modify which tools the agent can use",
+      "conditional": "customizeToolAccess",
+      "fields": [
+        {
+          "name": "toolAccess.braveSearch.enabled",
+          "label": "Enable Web Search",
+          "type": "checkbox",
+          "helpText": "Allow the agent to search the web"
+        },
+        {
+          "name": "toolAccess.codeExecution.enabled",
+          "label": "Enable Code Execution",
+          "type": "checkbox",
+          "helpText": "Allow the agent to execute code"
+        }
+      ]
+    }
+  ]
+}

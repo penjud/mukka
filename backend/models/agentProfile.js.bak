@@ -1,0 +1,175 @@
+/**
+ * Agent Profile Schema
+ * 
+ * Defines the data structure for MukkaAI agents including basic information,
+ * personality traits, knowledge domains, LLM configuration, and access controls.
+ */
+
+const mongoose = require('mongoose');
+const { Schema } = mongoose;
+
+const AgentProfileSchema = new Schema({
+  // Basic Information
+  name: {
+    type: String,
+    required: true,
+    trim: true,
+    maxlength: 50,
+    minlength: 2
+  },
+  description: {
+    type: String,
+    required: true,
+    trim: true,
+    maxlength: 500
+  },
+  avatar: {
+    type: String,
+    default: '/assets/avatars/default.png'
+  },
+  
+  // Personality Configuration
+  personalityTraits: [{
+    type: Schema.Types.ObjectId,
+    ref: 'PersonalityTrait'
+  }],
+  personalityIntensity: {
+    type: Number,
+    min: 1,
+    max: 10,
+    default: 5,
+    required: true
+  },
+  
+  // Knowledge and Expertise
+  domains: [{
+    type: Schema.Types.ObjectId,
+    ref: 'KnowledgeDomain'
+  }],
+  secondaryDomains: [{
+    type: Schema.Types.ObjectId,
+    ref: 'KnowledgeDomain'
+  }],
+  expertise: {
+    type: Map,
+    of: Number // 1-5 scale for expertise level
+  },
+  
+  // LLM Configuration
+  defaultModel: {
+    type: String,
+    required: true,
+    enum: ['llama3', 'dolphin-mistral', 'NeuralDaredevil-8B', 'other']
+  },
+  systemPrompt: {
+    type: String,
+    required: true,
+    maxlength: 4000
+  },
+  contextWindowSize: {
+    type: Number,
+    default: 8192
+  },
+  
+  // Tool Access
+  allowedTools: [{
+    type: String,
+    enum: ['memory', 'filesystem', 'brave_search', 'code_execution', 'image_analysis', 'calendar', 'email']
+  }],
+  toolPreferences: {
+    type: Map,
+    of: Schema.Types.Mixed // Tool-specific configurations
+  },
+  
+  // Access Control
+  isPublic: {
+    type: Boolean,
+    default: false
+  },
+  createdBy: {
+    type: Schema.Types.ObjectId,
+    ref: 'User',
+    required: true
+  },
+  allowEditing: {
+    type: Boolean,
+    default: true
+  },
+  
+  // Metadata
+  isTemplate: {
+    type: Boolean,
+    default: false
+  },
+  templateCategory: {
+    type: String,
+    enum: ['professional', 'creative', 'technical', 'casual', 'specialized', 'other'],
+    required: function() { return this.isTemplate; }
+  },
+  
+  // Timestamps
+  createdAt: {
+    type: Date,
+    default: Date.now
+  },
+  updatedAt: {
+    type: Date,
+    default: Date.now
+  }
+}, {
+  timestamps: true
+});
+
+// Virtual for agent's full profile URL
+AgentProfileSchema.virtual('url').get(function() {
+  return `/agents/${this._id}`;
+});
+
+// Pre-save hook to ensure the expertise map has values between 1-5
+AgentProfileSchema.pre('save', function(next) {
+  if (this.expertise) {
+    for (const [domain, level] of this.expertise.entries()) {
+      if (level < 1 || level > 5) {
+        return next(new Error(`Expertise level for domain ${domain} must be between 1 and 5`));
+      }
+    }
+  }
+  next();
+});
+
+// Method to assemble the complete system prompt based on personality and domains
+AgentProfileSchema.methods.assembleSystemPrompt = async function() {
+  await this.populate('personalityTraits domains');
+  
+  // Start with the base system prompt
+  let finalPrompt = this.systemPrompt;
+  
+  // Add personality instructions
+  if (this.personalityTraits && this.personalityTraits.length > 0) {
+    const personalitySegments = this.personalityTraits
+      .map(trait => trait.promptSegment)
+      .join('\n\n');
+    
+    finalPrompt += `\n\n## Personality Instructions\n${personalitySegments}`;
+  }
+  
+  // Add domain knowledge instructions
+  if (this.domains && this.domains.length > 0) {
+    const domainSegments = this.domains
+      .map(domain => domain.promptSegment)
+      .join('\n\n');
+    
+    finalPrompt += `\n\n## Knowledge Domain Instructions\n${domainSegments}`;
+  }
+  
+  // Add tool access information
+  if (this.allowedTools && this.allowedTools.length > 0) {
+    finalPrompt += `\n\n## Tool Access\nYou have access to the following tools: ${this.allowedTools.join(', ')}.`;
+  }
+  
+  return finalPrompt;
+};
+
+// Create and export the model
+const AgentProfile = mongoose.model('AgentProfile', AgentProfileSchema);
+module.exports = AgentProfile;
