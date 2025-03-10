@@ -1,6 +1,7 @@
 <template>
   <v-app>
     <router-view />
+    <Toast location="top-right" />
   </v-app>
 </template>
 
@@ -9,6 +10,7 @@ import { onMounted } from 'vue';
 import { useAuthStore } from './stores/auth';
 import { useRouter } from 'vue-router';
 import { useThemeManager } from './composables/useTheme';
+import Toast from './components/common/Toast.vue';
 
 const authStore = useAuthStore();
 const router = useRouter();

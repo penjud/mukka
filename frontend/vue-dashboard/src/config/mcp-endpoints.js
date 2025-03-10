@@ -60,13 +60,13 @@ export const MCP_SERVICES = {
     description: 'User authentication and management'
   },
   
-  // Web UI
-  webUi: {
-    name: 'MukkaAI Web UI',
-    endpoint: 'http://localhost:3001',
+  // Vue Dashboard - Primary User Interface
+  vueDashboard: {
+    name: 'MukkaAI Dashboard',
+    endpoint: 'http://localhost:3002',
     status: true,
-    icon: 'mdi-monitor-dashboard',
-    description: 'User interface'
+    icon: 'mdi-view-dashboard',
+    description: 'Primary user interface'
   }
 };
 
