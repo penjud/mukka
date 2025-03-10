@@ -12,38 +12,38 @@
       </v-col>
       
       <v-col cols="12" md="6">
+        <!-- Fixed select with direct items and no menu-props -->
         <v-select
           v-model="config.defaultModel"
           label="Default Model"
           variant="outlined"
-          :items="modelOptions"
+          :items="['llama3', 'mistral', 'codellama', 'phi-2', 'mixtral']"
           hint="Default AI model for new conversations"
           persistent-hint
-          menu-props="auto"
         ></v-select>
       </v-col>
       
       <v-col cols="12" md="6">
+        <!-- Fixed select with direct items and no menu-props -->
         <v-select
           v-model="config.defaultTheme"
           label="Default UI Theme"
           variant="outlined"
-          :items="themeOptions"
+          :items="['System Default', 'Light', 'Dark', 'High Contrast']"
           hint="Default theme for new users"
           persistent-hint
-          menu-props="auto"
         ></v-select>
       </v-col>
       
       <v-col cols="12" md="6">
+        <!-- Fixed select with direct items and no menu-props -->
         <v-select
           v-model="config.defaultLanguage"
           label="Default Language"
           variant="outlined"
-          :items="languageOptions"
+          :items="['English', 'Spanish', 'French', 'German', 'Chinese', 'Japanese']"
           hint="Default interface language"
           persistent-hint
-          menu-props="auto"
         ></v-select>
       </v-col>
       
@@ -170,40 +170,6 @@ const showSnackbar = ref(false);
 const snackbarText = ref('');
 const snackbarColor = ref('success');
 
-// Available options for the select fields
-const modelOptions = [
-  'llama3',
-  'mistral',
-  'codellama',
-  'phi-2',
-  'mixtral',
-  'openchat',
-  'wizard-math',
-  'neural-chat'
-];
-
-const themeOptions = [
-  'System Default',
-  'Light',
-  'Dark',
-  'High Contrast'
-];
-
-const languageOptions = [
-  'English',
-  'Spanish',
-  'French',
-  'German',
-  'Chinese',
-  'Japanese',
-  'Italian',
-  'Portuguese',
-  'Russian'
-];
-
-// Original configuration to track changes
-const originalConfig = reactive({});
-
 // Configuration object to bind to the form
 const config = reactive({
   systemName: 'MukkaAI',
@@ -214,6 +180,9 @@ const config = reactive({
   autoToolTriggering: true,
   welcomeMessage: 'Welcome to MukkaAI!'
 });
+
+// Original configuration to track changes
+const originalConfig = reactive({});
 
 // Watch for changes to initialConfig and update the form
 watch(() => props.initialConfig, (newConfig) => {
@@ -273,25 +242,24 @@ onMounted(() => {
 });
 </script>
 
-<style scoped>
-/* Fix for dropdown labels */
-:deep(.v-select .v-field__input) {
-  padding-top: 6px;
+<style>
+/* Make selects work properly */
+.v-select .v-field__input {
+  display: flex;
+  align-items: center;
+  min-height: 56px;
+  padding-top: 0 !important;
 }
 
-:deep(.v-field__field) {
-  align-items: flex-start;
+.v-select .v-select__selection {
+  margin-top: 0 !important;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
-:deep(.v-field__field .v-label) {
-  margin-top: 4px;
-}
-
-:deep(.v-field__append-inner) {
-  padding-top: 6px;
-}
-
-:deep(.v-field--active .v-label.v-field-label) {
-  transform: translateY(-16px) scale(0.75);
+.v-select .v-field__append-inner {
+  align-items: center;
+  display: flex;
+  padding-top: 0 !important;
 }
 </style>
